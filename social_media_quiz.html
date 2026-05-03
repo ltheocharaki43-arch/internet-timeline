@@ -1,0 +1,325 @@
+
+<h2 class="sr-only">Social Media Quiz — Διαδραστικό παιχνίδι γνώσεων για την ιστορία των social media</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0f1e;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.qwrap{width:100%;max-width:620px;margin:0 auto}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.07)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes barGrow{from{width:0}to{width:var(--w)}}
+@keyframes countdown{from{stroke-dashoffset:0}to{stroke-dashoffset:226}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+.fade{animation:fadeUp .35s ease both}
+
+/* HEADER */
+.qheader{text-align:center;margin-bottom:1.5rem}
+.qtitle{font-size:22px;font-weight:800;background:linear-gradient(135deg,#60a5fa,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px}
+.qsub{font-size:13px;color:#475569}
+
+/* SCOREBAR */
+.scorebar{display:flex;justify-content:space-between;align-items:center;background:#111827;border:1px solid #1e293b;border-radius:14px;padding:.75rem 1.25rem;margin-bottom:1.25rem}
+.sb-item{text-align:center}
+.sb-label{font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
+.sb-val{font-size:18px;font-weight:700;color:#f1f5f9}
+.sb-val.score{color:#f472b6}
+.sb-val.streak{color:#fb923c}
+.sb-val.qnum{color:#60a5fa}
+.progress-wrap{flex:1;margin:0 1.25rem}
+.progress-track{height:6px;background:#1e293b;border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#3b82f6,#a78bfa);transition:width .5s ease}
+.progress-label{font-size:10px;color:#475569;margin-top:3px;text-align:right}
+
+/* TIMER */
+.timer-wrap{display:flex;justify-content:center;margin-bottom:1rem}
+.timer-svg{transform:rotate(-90deg)}
+.timer-bg{fill:none;stroke:#1e293b;stroke-width:4}
+.timer-arc{fill:none;stroke-width:4;stroke-linecap:round;transition:stroke .5s;stroke-dasharray:226;animation:countdown linear forwards}
+.timer-text{font-size:14px;font-weight:700;fill:#f1f5f9;text-anchor:middle;dominant-baseline:central}
+
+/* QUESTION CARD */
+.qcard{background:#111827;border:1px solid #1e293b;border-radius:20px;padding:1.75rem 1.75rem 1.5rem;margin-bottom:1rem}
+.q-logo{width:52px;height:52px;border-radius:14px;margin:0 auto 1rem;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.1)}
+.q-num{font-size:11px;color:#475569;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.5rem;text-align:center}
+.q-text{font-size:17px;font-weight:600;color:#f1f5f9;line-height:1.5;text-align:center}
+
+/* OPTIONS */
+.options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
+.opt{background:#111827;border:1.5px solid #1e293b;border-radius:12px;padding:14px 16px;cursor:pointer;font-size:14px;font-weight:500;color:#cbd5e1;transition:all .18s;display:flex;align-items:center;gap:10px;text-align:left;min-height:54px}
+.opt:hover:not(.disabled){background:#1e293b;border-color:#3b82f6;color:#f1f5f9;transform:translateY(-1px)}
+.opt.correct{background:#14532d;border-color:#22c55e;color:#86efac;animation:pop .35s ease}
+.opt.wrong{background:#450a0a;border-color:#ef4444;color:#fca5a5;animation:shake .4s ease}
+.opt.reveal{background:#1e293b;border-color:#334155;color:#64748b}
+.opt.disabled{cursor:default}
+.opt-letter{width:26px;height:26px;border-radius:8px;background:#1e293b;color:#94a3b8;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s}
+.opt.correct .opt-letter{background:#166534;color:#86efac}
+.opt.wrong .opt-letter{background:#7f1d1d;color:#fca5a5}
+
+/* FEEDBACK */
+.feedback{border-radius:14px;padding:14px 18px;margin-bottom:1rem;display:flex;gap:12px;align-items:flex-start;animation:fadeUp .3s ease}
+.feedback.correct-fb{background:#052e16;border:1px solid #166534}
+.feedback.wrong-fb{background:#1c0505;border:1px solid #7f1d1d}
+.fb-icon{font-size:20px;flex-shrink:0}
+.fb-body{}
+.fb-title{font-size:14px;font-weight:700;margin-bottom:3px}
+.feedback.correct-fb .fb-title{color:#4ade80}
+.feedback.wrong-fb .fb-title{color:#f87171}
+.fb-text{font-size:13px;color:#94a3b8;line-height:1.6}
+
+/* NEXT BTN */
+.next-btn{width:100%;padding:14px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s,transform .15s;letter-spacing:.3px}
+.next-btn:hover{opacity:.92;transform:translateY(-1px)}
+.next-btn:active{transform:scale(.98)}
+
+/* RESULTS */
+.results{text-align:center;animation:fadeUp .4s ease}
+.results-emoji{font-size:64px;margin-bottom:.75rem;display:block}
+.results-title{font-size:26px;font-weight:800;color:#f1f5f9;margin-bottom:.5rem}
+.results-sub{font-size:15px;color:#64748b;margin-bottom:1.5rem}
+.score-big{font-size:52px;font-weight:900;background:linear-gradient(135deg,#f472b6,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.25rem}
+.score-label{font-size:13px;color:#475569;margin-bottom:1.5rem}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem}
+.stat-box{background:#111827;border:1px solid #1e293b;border-radius:12px;padding:14px 10px}
+.stat-box-val{font-size:22px;font-weight:800;margin-bottom:3px}
+.stat-box-lbl{font-size:11px;color:#475569;letter-spacing:.5px}
+.bar-row{background:#111827;border:1px solid #1e293b;border-radius:12px;padding:14px 16px;margin-bottom:1rem;text-align:left}
+.bar-label{font-size:12px;color:#94a3b8;margin-bottom:6px}
+.bar-track{height:8px;background:#1e293b;border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;--w:0%;animation:barGrow .8s .3s ease both;width:var(--w)}
+.replay-btn{width:100%;padding:14px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.3px;transition:opacity .2s}
+.replay-btn:hover{opacity:.88}
+
+/* INTRO */
+.intro{text-align:center;animation:fadeUp .4s ease}
+.intro-icon{font-size:56px;margin-bottom:1rem;display:block}
+.intro-title{font-size:24px;font-weight:800;color:#f1f5f9;margin-bottom:.5rem}
+.intro-desc{font-size:14px;color:#64748b;line-height:1.7;margin-bottom:1.5rem;max-width:400px;margin-left:auto;margin-right:auto}
+.intro-features{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:1.5rem}
+.feat-pill{background:#111827;border:1px solid #1e293b;border-radius:20px;padding:5px 13px;font-size:12px;color:#94a3b8;display:flex;align-items:center;gap:5px}
+.start-btn{padding:15px 40px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;transition:opacity .2s,transform .15s;letter-spacing:.3px}
+.start-btn:hover{opacity:.9;transform:translateY(-2px)}
+</style>
+
+<div class="qwrap">
+
+<!-- INTRO SCREEN -->
+<div id="screen-intro" class="intro">
+  <span class="intro-icon">🧠</span>
+  <div class="intro-title">Social Media Quiz</div>
+  <div class="intro-desc">Πόσο καλά ξέρεις την ιστορία των social media; Απάντησε σε 10 ερωτήσεις και δες το σκορ σου!</div>
+  <div class="intro-features">
+    <div class="feat-pill">⏱ 15 δευτ./ερώτηση</div>
+    <div class="feat-pill">🎯 10 ερωτήσεις</div>
+    <div class="feat-pill">🔥 Bonus streak</div>
+    <div class="feat-pill">🏆 Βαθμολογία</div>
+  </div>
+  <button class="start-btn" onclick="startQuiz()">Ξεκίνα το Quiz ▶</button>
+</div>
+
+<!-- QUIZ SCREEN -->
+<div id="screen-quiz" style="display:none">
+  <div class="qheader">
+    <div class="qtitle">📱 Social Media Quiz</div>
+    <div class="qsub">Δοκίμασε τις γνώσεις σου!</div>
+  </div>
+  <div class="scorebar">
+    <div class="sb-item"><div class="sb-label">Ερώτηση</div><div class="sb-val qnum" id="qnum">1/10</div></div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+      <div class="progress-label" id="prog-label">0%</div>
+    </div>
+    <div class="sb-item"><div class="sb-label">Streak</div><div class="sb-val streak" id="streak-disp">🔥 0</div></div>
+    <div class="sb-item"><div class="sb-label">Σκορ</div><div class="sb-val score" id="score-disp">0</div></div>
+  </div>
+
+  <div class="timer-wrap">
+    <svg width="72" height="72" class="timer-svg">
+      <circle class="timer-bg" cx="36" cy="36" r="30"/>
+      <circle class="timer-arc" id="timer-arc" cx="36" cy="36" r="30" stroke="#3b82f6"/>
+      <text class="timer-text" id="timer-txt" x="36" y="36" transform="rotate(90,36,36)">15</text>
+    </svg>
+  </div>
+
+  <div class="qcard fade" id="qcard">
+    <div class="q-logo" id="q-logo"></div>
+    <div class="q-num" id="q-num">ΕΡΩΤΗΣΗ 1</div>
+    <div class="q-text" id="q-text"></div>
+  </div>
+
+  <div class="options" id="options"></div>
+  <div id="feedback" style="display:none"></div>
+  <button class="next-btn" id="next-btn" style="display:none" onclick="nextQ()">Επόμενη ερώτηση →</button>
+</div>
+
+<!-- RESULTS SCREEN -->
+<div id="screen-results" style="display:none"></div>
+
+</div>
+
+<script>
+const questions=[
+  {q:"Ποιο ήταν το πρώτο κοινωνικό δίκτυο στην ιστορία;",opts:["MySpace","SixDegrees","Friendster","Orkut"],ans:1,logo:"🕸",logoBg:"#6C5CE7",exp:"Το SixDegrees.com (1997) ήταν το πρώτο δίκτυο που επέτρεπε δημιουργία προφίλ και λίστα φίλων.",cat:"Ιστορία"},
+  {q:"Σε ποια θεωρία βασίστηκε το όνομα «SixDegrees»;",opts:["Θεωρία παιγνίων","Θεωρία χάους","Θεωρία 6 βαθμών διαχωρισμού","Θεωρία δικτύων"],ans:2,logo:"🕸",logoBg:"#6C5CE7",exp:"Η θεωρία λέει ότι οποιοσδήποτε άνθρωπος συνδέεται με οποιονδήποτε άλλο μέσω το πολύ 6 γνωριμιών.",cat:"Θεωρία"},
+  {q:"Σε ποια πόλη ίδρυσε ο Zuckerberg το Facebook;",opts:["Palo Alto","Νέα Υόρκη","Cambridge (Harvard)","San Francisco"],ans:2,logo:"👥",logoBg:"#1877F2",exp:"Ο Zuckerberg δημιούργησε το Facebook στο Harvard το 2004, αρχικά μόνο για φοιτητές.",cat:"Facebook"},
+  {q:"Πόσο κόστισε η εξαγορά του YouTube από την Google;",opts:["$500 εκ.","$1.65 δισ.","$3 δισ.","$5 δισ."],ans:1,logo:"▶",logoBg:"#FF0000",exp:"Η Google αγόρασε το YouTube τον Οκτώβριο 2006 για $1.65 δισεκατομμύρια — μία από τις καλύτερες εξαγορές στην ιστορία!",cat:"YouTube"},
+  {q:"Ποιο ήταν το πρώτο βίντεο που ανέβηκε στο YouTube;",opts:["Gangnam Style","Me at the zoo","Charlie bit my finger","Evolution of Dance"],ans:1,logo:"▶",logoBg:"#FF0000",exp:"Το «Me at the zoo» (18 δευτ.) ανεβήκε στις 23 Απριλίου 2005 από τον συνιδρυτή Jawed Karim.",cat:"YouTube"},
+  {q:"Ποιος εφηύρε το hashtag (#) στο Twitter;",opts:["Jack Dorsey","Elon Musk","Chris Messina","Ev Williams"],ans:2,logo:"✕",logoBg:"#1DA1F2",exp:"Ο Chris Messina πρότεινε το # τον Αύγουστο 2007. Αρχικά η Twitter το αρνήθηκε — τελικά έγινε παγκόσμιο φαινόμενο!",cat:"Twitter"},
+  {q:"Για πόσα δισεκατομμύρια αγόρασε ο Elon Musk το Twitter;",opts:["$24 δισ.","$34 δισ.","$44 δισ.","$54 δισ."],ans:2,logo:"✕",logoBg:"#1DA1F2",exp:"Ο Musk αγόρασε το Twitter για $44 δισεκατομμύρια τον Οκτώβριο 2022 και το μετονόμασε σε X.",cat:"Twitter"},
+  {q:"Πόσο πλήρωσε το Facebook για το Instagram (2012);",opts:["$500 εκ.","$1 δισ.","$5 δισ.","$10 δισ."],ans:1,logo:"◉",logoBg:"#E1306C",exp:"Η συμφωνία των $1 δισ. θεωρήθηκε τότε υπερβολική. Σήμερα το Instagram αποτιμάται σε $100+ δισεκατομμύρια!",cat:"Instagram"},
+  {q:"Πόσο χρόνο χρειάστηκε το TikTok για να φτάσει 1 δισ. χρήστες;",opts:["Λιγότερο από 5 χρόνια","7-8 χρόνια","10 χρόνια","12 χρόνια"],ans:0,logo:"♪",logoBg:"#EE1D52",exp:"Το TikTok (2016) έφτασε 1 δισ. χρήστες ταχύτερα από κάθε άλλη πλατφόρμα — αρκετά κάτω από 5 χρόνια!",cat:"TikTok"},
+  {q:"Ποιο δίκτυο εξαγοράστηκε από τη Microsoft το 2016;",opts:["Twitter","Instagram","LinkedIn","Pinterest"],ans:2,logo:"💼",logoBg:"#0A66C2",exp:"Η Microsoft αγόρασε το LinkedIn για $26 δισ. το 2016 — την μεγαλύτερη εξαγορά της Microsoft μέχρι τότε.",cat:"LinkedIn"}
+];
+
+const TOTAL=10,TIME=15;
+let cur=0,score=0,streak=0,maxStreak=0,correct=0,timer=null,timeLeft=TIME,answered=false;
+let shuffled=[];
+
+function shuffle(arr){return [...arr].sort(()=>Math.random()-.5);}
+
+function startQuiz(){
+  shuffled=shuffle(questions).slice(0,TOTAL);
+  cur=0;score=0;streak=0;maxStreak=0;correct=0;
+  document.getElementById('screen-intro').style.display='none';
+  document.getElementById('screen-quiz').style.display='block';
+  loadQ();
+}
+
+function loadQ(){
+  answered=false;
+  const q=shuffled[cur];
+  document.getElementById('qnum').textContent=(cur+1)+'/'+TOTAL;
+  document.getElementById('prog').style.width=((cur/TOTAL)*100)+'%';
+  document.getElementById('prog-label').textContent=Math.round((cur/TOTAL)*100)+'%';
+  document.getElementById('q-num').textContent='ΕΡΩΤΗΣΗ '+(cur+1)+' · '+q.cat;
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('q-logo').innerHTML=`<div style="font-size:28px;width:52px;height:52px;border-radius:14px;background:${q.logoBg}33;border:2px solid ${q.logoBg}66;display:flex;align-items:center;justify-content:center">${q.logo}</div>`;
+  document.getElementById('feedback').style.display='none';
+  document.getElementById('next-btn').style.display='none';
+  const letters=['Α','Β','Γ','Δ'];
+  const opts=document.getElementById('options');
+  opts.innerHTML=q.opts.map((o,i)=>`<button class="opt" id="opt${i}" onclick="pick(${i})"><span class="opt-letter">${letters[i]}</span>${o}</button>`).join('');
+  document.getElementById('qcard').classList.remove('fade');
+  void document.getElementById('qcard').offsetWidth;
+  document.getElementById('qcard').classList.add('fade');
+  startTimer();
+}
+
+function startTimer(){
+  clearInterval(timer);
+  timeLeft=TIME;
+  updateTimerUI();
+  const arc=document.getElementById('timer-arc');
+  arc.style.animation='none';
+  void arc.offsetWidth;
+  arc.style.animation=`countdown ${TIME}s linear forwards`;
+  arc.style.stroke='#3b82f6';
+  timer=setInterval(()=>{
+    timeLeft--;
+    updateTimerUI();
+    if(timeLeft<=5)document.getElementById('timer-arc').style.stroke='#ef4444';
+    else if(timeLeft<=10)document.getElementById('timer-arc').style.stroke='#f59e0b';
+    if(timeLeft<=0){clearInterval(timer);timeUp();}
+  },1000);
+}
+
+function updateTimerUI(){
+  document.getElementById('timer-txt').textContent=timeLeft;
+}
+
+function timeUp(){
+  if(answered)return;
+  answered=true;
+  streak=0;
+  document.getElementById('streak-disp').textContent='🔥 '+streak;
+  const q=shuffled[cur];
+  disableOpts();
+  document.getElementById('opt'+q.ans).classList.add('correct');
+  showFeedback(false,'⏰ Ο χρόνος τελείωσε!','Η σωστή απάντηση ήταν: <strong style="color:#86efac">'+q.opts[q.ans]+'</strong>. '+q.exp);
+  document.getElementById('next-btn').style.display='block';
+}
+
+function pick(i){
+  if(answered)return;
+  answered=true;
+  clearInterval(timer);
+  const q=shuffled[cur];
+  const isCorrect=i===q.ans;
+  disableOpts();
+  if(isCorrect){
+    const bonus=Math.ceil(timeLeft/3);
+    const pts=100+bonus;
+    score+=pts;streak++;
+    if(streak>maxStreak)maxStreak=streak;
+    correct++;
+    document.getElementById('opt'+i).classList.add('correct');
+    document.getElementById('score-disp').textContent=score;
+    document.getElementById('streak-disp').textContent='🔥 '+streak;
+    showFeedback(true,'✅ Σωστό! +'+pts+' πόντοι'+(streak>1?' (🔥 x'+streak+' streak!)':''),q.exp);
+  } else {
+    streak=0;
+    document.getElementById('opt'+i).classList.add('wrong');
+    document.getElementById('opt'+q.ans).classList.add('correct');
+    document.getElementById('streak-disp').textContent='🔥 '+streak;
+    showFeedback(false,'❌ Λάθος!','Η σωστή απάντηση ήταν: <strong style="color:#86efac">'+q.opts[q.ans]+'</strong>. '+q.exp);
+  }
+  document.getElementById('next-btn').style.display='block';
+  document.getElementById('next-btn').textContent=cur<TOTAL-1?'Επόμενη ερώτηση →':'Δες τα αποτελέσματα 🏆';
+}
+
+function disableOpts(){
+  document.querySelectorAll('.opt').forEach(o=>{o.classList.add('disabled');if(!o.classList.contains('correct')&&!o.classList.contains('wrong'))o.classList.add('reveal');});
+}
+
+function showFeedback(ok,title,text){
+  const fb=document.getElementById('feedback');
+  fb.style.display='flex';
+  fb.className='feedback '+(ok?'correct-fb':'wrong-fb');
+  fb.innerHTML=`<span class="fb-icon">${ok?'🎉':'💡'}</span><div class="fb-body"><div class="fb-title">${title}</div><div class="fb-text">${text}</div></div>`;
+}
+
+function nextQ(){
+  cur++;
+  if(cur>=TOTAL){showResults();return;}
+  loadQ();
+}
+
+function showResults(){
+  document.getElementById('screen-quiz').style.display='none';
+  const pct=Math.round((correct/TOTAL)*100);
+  let emoji='🥇',label='Απίστευτο!';
+  if(pct<40){emoji='😅';label='Χρειάζεσαι περισσότερο διάβασμα!';}
+  else if(pct<60){emoji='🤔';label='Όχι άσχημα, αλλά υπάρχουν περιθώρια!';}
+  else if(pct<80){emoji='👏';label='Καλή δουλειά! Ξέρεις τα βασικά!';}
+  else if(pct<100){emoji='🌟';label='Εξαιρετικό! Σχεδόν τέλειο!';}
+  const avgTime=Math.round((TOTAL*TIME-0)/TOTAL);
+  const r=document.getElementById('screen-results');
+  r.style.display='block';
+  r.innerHTML=`<div class="results">
+    <span class="results-emoji">${emoji}</span>
+    <div class="results-title">${label}</div>
+    <div class="results-sub">Ολοκλήρωσες το Social Media Quiz!</div>
+    <div class="score-big">${score}</div>
+    <div class="score-label">ΣΥΝΟΛΙΚΟΙ ΠΟΝΤΟΙ</div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-box-val" style="color:#4ade80">${correct}/${TOTAL}</div><div class="stat-box-lbl">Σωστές</div></div>
+      <div class="stat-box"><div class="stat-box-val" style="color:#fb923c">🔥 ${maxStreak}</div><div class="stat-box-lbl">Max Streak</div></div>
+      <div class="stat-box"><div class="stat-box-val" style="color:#a78bfa">${pct}%</div><div class="stat-box-lbl">Ποσοστό</div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Επίδοση</div>
+      <div class="bar-track"><div class="bar-fill" style="--w:${pct}%;background:${pct>=80?'#4ade80':pct>=60?'#fb923c':'#ef4444'}"></div></div>
+    </div>
+    <button class="replay-btn" onclick="restart()">🔄 Παίξε ξανά!</button>
+  </div>`;
+}
+
+function restart(){
+  document.getElementById('screen-results').style.display='none';
+  document.getElementById('screen-quiz').style.display='block';
+  cur=0;score=0;streak=0;maxStreak=0;correct=0;
+  shuffled=shuffle(questions).slice(0,TOTAL);
+  loadQ();
+}
+</script>
