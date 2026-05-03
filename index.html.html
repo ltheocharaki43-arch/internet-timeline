@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Η Ιστορία του Διαδικτύου</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap');
+
+:root {
+  --bg:       #f0f4ff;
+  --surface:  #e4eaf8;
+  --card:     #ffffff;
+  --border:   #c8d4f0;
+  --border2:  #8fa3d8;
+  --text:     #0f1c3f;
+  --muted:    #4a5a80;
+  --accent:   #0066cc;
+  --accent2:  #6d28d9;
+  --accent3:  #d97706;
+  --green:    #059669;
+  --pink:     #e11d48;
+  --line-w:   3px;
+  --font-head: 'Syne', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-head);
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ═══ NOISE OVERLAY ═══ */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: .2;
+}
+
+/* ═══ HERO ═══ */
+.hero {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  overflow: hidden;
+  background: linear-gradient(160deg, #ddeeff 0%, #edf2ff 40%, #f5f0ff 100%);
+}
+
+.hero-grid {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+}
+.hero-grid svg { width: 100%; height: 100%; opacity: .09; }
+
+.hero-glow {
+  position: absolute;
+  width: 700px; height: 700px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,100,200,.12) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  animation: glowPulse 4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes glowPulse {
+  0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+  50%      { transform: translate(-50%,-50%) scale(1.12); opacity: .7; }
+}
+
+.hero-tag {
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
+  color: var(--accent); opacity: .9; margin-bottom: 1.5rem;
+  display: flex; align-items: center; gap: 10px;
+}
+.hero-tag::before, .hero-tag::after {
+  content: ''; display: block; width: 40px; height: 1px; background: var(--accent); opacity: .6;
+}
+
+.hero h1 {
+  font-size: clamp(38px, 8vw, 88px);
+  font-weight: 800; line-height: .95;
+  letter-spacing: -3px;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+.hero h1 .line1 { display: block; color: var(--text); }
+.hero h1 .line2 {
+  display: block;
+  background: linear-gradient(90deg, var(--accent), var(--accent2), var(--pink));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-desc {
+  font-size: 16px; color: #3a4a6e; max-width: 520px;
+  line-height: 1.8; margin-bottom: 3rem;
+  font-family: var(--font-mono); font-size: 13px;
+}
+
+.hero-stats {
+  display: flex; gap: 2.5rem; justify-content: center; flex-wrap: wrap;
+  margin-bottom: 3rem;
+}
+.h-stat { text-align: center; }
+.h-stat-num {
+  font-size: 32px; font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: block;
+}
+.h-stat-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 2px; }
+
+.scroll-hint {
+  font-family: var(--font-mono); font-size: 11px; color: #6b7faa;
+  letter-spacing: 2px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  animation: bounce 2s ease-in-out infinite;
+}
+@keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+.scroll-hint::after { content: '↓'; font-size: 20px; color: var(--accent); }
+
+/* ═══ TIMELINE SECTION ═══ */
+.tl-section {
+  position: relative; z-index: 1;
+  padding: 0 1rem 6rem;
+  max-width: 1100px; margin: 0 auto;
+}
+
+.tl-header {
+  text-align: center; margin-bottom: 4rem;
+  font-family: var(--font-mono); font-size: 11px;
+  color: #6b7faa; letter-spacing: 3px; text-transform: uppercase;
+}
+
+/* Central spine */
+.tl-spine {
+  position: absolute;
+  left: 50%; top: 0; bottom: 0;
+  width: var(--line-w);
+  background: linear-gradient(to bottom, transparent, var(--accent) 5%, var(--border2) 20%, var(--border2) 95%, transparent);
+  transform: translateX(-50%);
+}
+.tl-spine::before {
+  content: '';
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 1px; height: 100%;
+  background: linear-gradient(to bottom, var(--accent), transparent);
+  filter: blur(3px); opacity: .25;
+}
+
+/* Each era */
+.era {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 60px 1fr;
+  gap: 0;
+  margin-bottom: 0;
+}
+
+.era-left  { grid-column: 1; padding-right: 40px; }
+.era-center { grid-column: 2; display: flex; flex-direction: column; align-items: center; position: relative; }
+.era-right { grid-column: 3; padding-left: 40px; }
+
+/* Alternating sides */
+.era:nth-child(even) .era-left  { order: 3; padding-left: 40px; padding-right: 0; }
+.era:nth-child(even) .era-center { order: 2; }
+.era:nth-child(even) .era-right { order: 1; padding-right: 40px; padding-left: 0; }
+
+/* Year node */
+.era-node {
+  width: 56px; height: 56px; border-radius: 50%;
+  border: 3px solid var(--border2);
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  color: var(--muted); letter-spacing: .5px;
+  position: relative; z-index: 2;
+  transition: all .3s;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin: 28px 0 0;
+}
+.era-node:hover, .era-node.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0,102,204,.08);
+  box-shadow: 0 0 0 6px rgba(0,102,204,.1), 0 0 20px rgba(0,102,204,.15);
+}
+
+/* Connector line (horizontal) */
+.era-connector {
+  position: absolute;
+  top: 56px; width: 40px; height: 2px;
+  background: var(--border2);
+}
+.era:nth-child(odd)  .era-connector { right: 100%; }
+.era:nth-child(even) .era-connector { left: 100%; }
+
+/* Vertical line segment on spine */
+.era-vline {
+  flex: 1; width: var(--line-w);
+  background: var(--border2);
+  min-height: 40px;
+}
+
+/* Card */
+.era-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin: 16px 0 24px;
+  position: relative;
+  transition: all .3s;
+  cursor: pointer;
+  overflow: hidden;
+}
+.era-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--card-accent, var(--accent));
+  border-radius: 16px 16px 0 0;
+}
+.era-card:hover {
+  border-color: var(--border2);
+  transform: translateY(-3px);
+  box-shadow: 0 20px 60px rgba(0,0,0,.12), 0 0 0 1px var(--border2);
+}
+
+.era-card-year-badge {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  color: var(--card-accent, var(--accent));
+  letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: .5rem; display: flex; align-items: center; gap: 8px;
+}
+.era-card-year-badge::before {
+  content: ''; width: 20px; height: 1px; background: currentColor; opacity: .6;
+}
+
+.era-card h3 {
+  font-size: 19px; font-weight: 800; letter-spacing: -.5px;
+  color: var(--text); margin-bottom: .6rem; line-height: 1.2;
+}
+.era-card p {
+  font-family: var(--font-mono); font-size: 12px; color: #3a4a70;
+  line-height: 1.8; margin-bottom: 1rem;
+}
+
+.era-card-meta {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.meta-tag {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .5px;
+  padding: 3px 9px; border-radius: 4px;
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.era-icon {
+  font-size: 28px; margin-bottom: .75rem;
+}
+
+/* Expandable detail */
+.era-detail {
+  display: none; margin-top: 1rem; padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.era-detail.open { display: block; }
+.era-detail-stat {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; margin-bottom: 1rem;
+}
+.d-stat {
+  background: var(--bg); border-radius: 8px;
+  padding: 10px 12px; border: 1px solid var(--border);
+}
+.d-stat-val { font-size: 18px; font-weight: 800; margin-bottom: 2px; }
+.d-stat-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: .5px; }
+.era-fact {
+  background: rgba(0,102,204,.06); border-left: 3px solid var(--card-accent, var(--accent));
+  padding: .85rem 1rem; border-radius: 0 8px 8px 0;
+  font-family: var(--font-mono); font-size: 12px; color: var(--muted); line-height: 1.7;
+}
+.era-fact strong { color: var(--text); }
+
+.read-more {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 11px; color: var(--card-accent, var(--accent));
+  margin-top: .75rem; cursor: pointer; background: none; border: none;
+  padding: 0; letter-spacing: 1px; transition: opacity .2s;
+}
+.read-more:hover { opacity: .7; }
+.read-more .arrow { transition: transform .2s; }
+.read-more.open .arrow { transform: rotate(180deg); }
+
+/* ═══ DECADE DIVIDER ═══ */
+.decade-divider {
+  position: relative; z-index: 2;
+  text-align: center; margin: 2rem 0;
+  display: flex; align-items: center; gap: 1.5rem;
+}
+.decade-divider::before, .decade-divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border2));
+}
+.decade-divider::after { background: linear-gradient(90deg, var(--border2), transparent); }
+.decade-label {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 4px;
+  color: var(--muted); white-space: nowrap;
+  background: var(--bg); padding: 0 1rem;
+}
+
+/* ═══ FOOTER STATS ═══ */
+.footer-section {
+  position: relative; z-index: 1;
+  background: var(--surface); border-top: 1px solid var(--border);
+  padding: 4rem 2rem;
+}
+.footer-inner { max-width: 900px; margin: 0 auto; }
+.footer-title {
+  font-size: 28px; font-weight: 800; text-align: center; margin-bottom: 2.5rem;
+  letter-spacing: -1px;
+}
+.footer-title span {
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+
+.fact-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+.fact-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.25rem;
+  position: relative; overflow: hidden;
+}
+.fact-card::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: var(--fc-color, var(--accent));
+}
+.fact-card-icon { font-size: 28px; margin-bottom: .75rem; }
+.fact-card-val {
+  font-size: 28px; font-weight: 800;
+  color: var(--fc-color, var(--accent)); margin-bottom: .25rem;
+}
+.fact-card-lbl { font-family: var(--font-mono); font-size: 11px; color: #3a4a70; line-height: 1.6; }
+
+/* ═══ NAV DOTS ═══ */
+.nav-dots {
+  position: fixed; right: 1.5rem; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 10px; z-index: 100;
+}
+.nav-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border2); cursor: pointer;
+  transition: all .2s; border: none; padding: 0;
+}
+.nav-dot:hover { background: var(--muted); }
+.nav-dot.active { background: var(--accent); transform: scale(1.5); }
+
+/* ═══ PROGRESS BAR ═══ */
+.read-progress {
+  position: fixed; top: 0; left: 0; height: 3px; z-index: 200;
+  background: linear-gradient(90deg, var(--accent), var(--accent2), var(--pink));
+  transition: width .1s linear;
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 700px) {
+  .era { grid-template-columns: 50px 1fr; }
+  .era-left  { display: none; }
+  .era-center { grid-column: 1; }
+  .era-right { grid-column: 2; padding-left: 20px; }
+  .era:nth-child(even) .era-left  { display: none; }
+  .era:nth-child(even) .era-center { order: 1; }
+  .era:nth-child(even) .era-right { order: 2; padding-right: 0; padding-left: 20px; }
+  .tl-spine { left: 25px; }
+  .era-node { width: 44px; height: 44px; font-size: 9px; }
+  .hero h1 { letter-spacing: -1px; }
+  .nav-dots { display: none; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { opacity: 0; animation: fadeUp .6s ease forwards; }
+</style>
+</head>
+<body>
+
+<div class="read-progress" id="readProg"></div>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero" id="top">
+  <div class="hero-grid">
+    <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+          <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#00d4ff" stroke-width=".5"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grid)"/>
+      <line x1="600" y1="0" x2="600" y2="800" stroke="#00d4ff" stroke-width="1"/>
+      <line x1="0" y1="400" x2="1200" y2="400" stroke="#00d4ff" stroke-width="1"/>
+    </svg>
+  </div>
+  <div class="hero-glow"></div>
+
+  <div class="hero-tag">Διαδραστική Χρονογραμμή</div>
+
+  <h1>
+    <span class="line1">Η Ιστορία</span>
+    <span class="line2">του Διαδικτύου</span>
+  </h1>
+
+  <p class="hero-desc">
+    Από το ARPANET του 1969 μέχρι την εποχή του AI —<br>
+    60+ χρόνια ψηφιακής επανάστασης σε μια χρονογραμμή.
+  </p>
+
+  <div class="hero-stats">
+    <div class="h-stat"><span class="h-stat-num">60+</span><span class="h-stat-lbl">Χρόνια Ιστορίας</span></div>
+    <div class="h-stat"><span class="h-stat-num">5.4B</span><span class="h-stat-lbl">Χρήστες Σήμερα</span></div>
+    <div class="h-stat"><span class="h-stat-num">15</span><span class="h-stat-lbl">Ορόσημα</span></div>
+    <div class="h-stat"><span class="h-stat-num">∞</span><span class="h-stat-lbl">Αλλαγές στον κόσμο</span></div>
+  </div>
+
+  <div class="scroll-hint">Κύλισε για να εξερευνήσεις</div>
+</section>
+
+<!-- ═══ TIMELINE ═══ -->
+<section class="tl-section" id="timeline">
+  <div class="tl-spine"></div>
+  <div class="tl-header">— Χρονολογική Αφήγηση —</div>
+
+  <!-- DECADE: 1960s-70s -->
+  <div class="decade-divider"><span class="decade-label">◈ ΔΕΚΑΕΤΙΑ 1960–1970 ◈</span></div>
+
+  <div class="era" data-id="0">
+    <div class="era-left"></div>
+    <div class="era-center">
+      <div class="era-node" onclick="activateNode(this, 0)">1969</div>
+      <div class="era-vline"></div>
+    </div>
+    <div class="era-right">
+      <div class="era-card fade-up" style="--card-accent:#00d4ff" onclick="toggleDetail(this)">
+        <div class="era-icon">🌐</div>
+        <div class="era-card-year-badge">1969</div>
+        <h3>ARPANET — Η Γέννηση</h3>
+        <p>Το πρώτο μήνυμα στέλνεται μεταξύ UCLA και Stanford Research Institute. Μεταδίδονται μόνο τα γράμματα "LO" πριν καταρρεύσει το σύστημα — ο στόχος ήταν "LOGIN".</p>
+        <div class="era-card-meta">
+          <span class="meta-tag">ARPA</span>
+          <span class="meta-tag">Packet Switching</span>
+          <span class="meta-tag">DoD</span>
+        </div>
+        <button class="read-more"><span>Περισσότερα</span><span class="arrow">▾</span></button>
+        <div class="era-detail">
+          <div class="era-detail-stat">
+            <div class="d-stat"><div class="d-stat-val" style="color:#00d4ff">4</div><div class="d-stat-lbl">Αρχικοί κόμβοι δικτύου</div></div>
+            <div class="d-stat"><div class="d-stat-val" style="color:#00d4ff">2</div><div class="d-stat-lbl">Γράμματα μεταδόθηκαν (LO)</div></div>
+          </div>
+          <div class="era-fact"><strong>Ήξερες ότι;</strong> Το ARPANET σχεδιάστηκε αρχικά για να επιβιώσει από πυρηνική επίθεση — η αποκεντρωμένη αρχιτεκτονική του είναι η βάση του σημερινού internet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="era" data-id="1">
+    <div class="era-left">
+      <div class="era-card fade-up" style="--card-accent:#7c3aed" onclick="toggleDetail(this)">
+        <div class="era-icon">📧</div>
+        <div class="era-card-year-badge">1971</div>
+        <h3>Το Πρώτο Email</h3>
+        <p>Ο Ray Tomlinson στέλνει το πρώτο email και επιλέγει το σύμβολο @ για να διαχωρίζει το όνομα χρήστη από τον server. Ένα σύμβολο που άλλαξε τον κόσμο.</p>
+        <div class="era-card-meta">
+          <span class="meta-tag">Ray Tomlinson</span>
+          <span class="meta-tag">ARPANET</span>
+          <span class="meta-tag">@</span>
+        </div>
+        <button class="read-more"><span>Περισσότερα</span><span class="arrow">▾</span></button>
+        <div class="era-detail">
+          <div class="era-detail-stat">
+            <div class="d-stat"><div class="d-stat-val" style="color:#7c3aed">1971</div><div class="d-stat-lbl">Χρονιά πρώτου email</div></div>
+            <div class="d-stat"><div class="d-stat-val" style="color:#7c3aed">@</div><div class="d-stat-lbl">Σύμβολο επιλεγμένο από Tomlinson</div></div>
+          </div>
+          <div class="era-fact"><strong>Ήξερες ότι;</strong> Ο Tomlinson δε θυμόταν τι έγραψε στο πρώτο email — πιστεύει ότι ήταν κάτι σαν "QWERTYUIOP". Σήμερα στέλνονται 347 δισ. emails ημερησίως.</div>
+        </div>
+      </div>
+    </div>
+    <div class="era-center">
+      <div class="era-node" onclick="activateNode(this,1)">1971</div>
+      <div class="era-vline"></div>
+    </div>
+    <div class="era-right"></div>
+  </div>
+
+  <div class="decade-divider"><span class="decade-label">◈ ΔΕΚΑΕΤΙΑ 1980 ◈</span></div>
+
+  <div class="era" data-id="2">
+    <div class="era-left"></div>
+    <div class="era-center">
+      <div class="era-node" onclick="activateNode(this,2)">1983</div>
+      <div class="era-vline"></div>
+    </div>
+    <div class="era-right">
+      <div class="era-card fade-up" style="--card-accent:#10b981" onclick="toggleDetail(this)">
+        <div class="era-icon">🔗</div>
+        <div class="era-card-year-badge">1983</div>
+        <h3>TCP/IP — Η Κοινή Γλώσσα</h3>
+        <p>Στις 1 Ιανουαρίου 1983 το ARPANET υιοθετεί το πρωτόκολλο TCP/IP. Η "ημέρα σημαίας" (Flag Day) θεωρείται η επίσημη γέννηση του σύγχρονου internet.</p>
+        <div class="era-card-meta">
+          <span class="meta-tag">TCP/IP</span>
+          <span class="meta-tag">Vint Cerf</span>
+          <span class="meta-tag">Bob Kahn</span>
+        </div>
+        <button class="read-more"><span>Περισσότερα</span><span class="arrow">▾</span></button>
+        <div class="era-detail">
+          <div class="era-detail-stat">
+            <div class="d-stat"><div class="d-stat-val" style="color:#10b981">1/1/83</div><div class="d-stat-lbl">Ημερομηνία Flag Day</div></div>
+            <div class="d-stat"><div class="d-stat-val" style="color:#10b981">562</div><div class="d-stat-lbl">Hosts στο ARPANET τότε</div></div>
+          </div>
+          <div class="era-fact"><strong>Ήξερες ότι;</strong> Ο Vint Cerf και ο Bob Kahn επινόησαν το TCP/IP το 1974. Θεωρούνται οι "Πατέρες του Internet" και τιμήθηκαν με το Βραβείο Turing (2004).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="era" data-id="3">
+    <div class="era-left">
+      <div class="era-card fade-up" style="--card-accent:#f59e0b" onclick="toggleDetail(this)">
+        <div class="era-icon">📁</div>
+        <div class="era-card-year-badge">1985</div>
+        <h3>Τα Πρώτα Domain Names</h3>
+        <p>Το σύστημα DNS (Domain Name System) τίθεται σε λειτουργία. Το πρώτο .com domain είναι το symbolics.com (15 Μαρτίου 1985) — εταιρεία υπολογιστών της Μασαχουσέτης.</p>
+        <div class="era-card-meta">
+          <span class="meta-tag">DNS</span>
+          <span class="meta-tag">.com</span>
+          <span class="meta-tag">symbolics.com</span>
+        </div>
+        <button class="read-more"><span>Περισσότερα</span><span class="arrow">▾</span></button>
+        <div class="era-detail">
+          <div class="era-detail-stat">
+            <div class="d-stat"><div class="d-stat-val" style="color:#f59e0b">15/3/85</div><div class="d-stat-lbl">Πρώτο .com domain</div></div>
+            <div class="d-stat"><div class="d-stat-val" style="color:#f59e0b">363M+</div><div class="d-stat-lbl">Domains σήμερα</div></div>
+          </div>
+          <div class="era-fact"><strong>Ήξερες ότι;</strong> Το symbolics.com είναι σήμερα ιστορικό αξιοθέατο. Αγοράστηκε το 2009 από έναν νεαρό επιχειρηματία και λειτουργεί ως "ψηφιακό μουσείο".</div>
+        </div>
+      </div>
+    </div>
+    <div class="era-center">
+      <div class="era-node" onclick="activateNode(this,3)">1985</div>
+      <div class="era-vline"></div>
+    </div>
+    <div class="era-right"></div>
+  </div>
+
+  <div class="decade-divider"><span class="decade-label">◈ ΔΕΚΑΕΤΙΑ 1990 ◈</span></div>
+
+  <div class="era" data-id="4">
+    <div class="era-left"></div>
+    <div class="era-center">
+      <div class="era-node" onclick="activateNode(this,4)">1991</div>
+      <div class="era-vline"></div>
+    </div>
+    <div class="era-right">
+      <div class="era-card fade-up" style="--card-accent:#f43f5e" onclick="toggleDetail(this)">
+        <div class="era-icon">🕸️</div>
+        <div class="era-card-year-badge">1991</div>
+        <h3>World Wide Web — Ανοιχτό για Όλους</h3>
+        <p>Ο Tim Berners-Lee δημοσιεύει το πρώτο website στον κόσμο και κάνει το WWW ανοιχτό. Η απόφαση να μην πατενταριστεί άλλαξε την ιστορία για πάντα.</p>
+        <div class="era-card-meta">
+          <span class="meta-tag">Tim Berners-Lee</span>
+          <span class="meta-tag">CERN</span>
+          <span class="meta-tag">HTML</span>
+        </div>
+        <button class="read-more"><span>Περισσότερα</span><span class="arrow">▾</span></button>
+        <div class="era-detail">
+          <div class="era-detail-stat">
+            <div class="d-stat"><div class="d-stat-val" style="color:#f43f5e">1</div><div class="d-stat-lbl">Πρώτο website (info.cern.ch)</div></div>
+            <div class="d-stat"><div class="d-stat-val" style="color:#f43f5e">2B+</div><div class="d-stat-lbl">Websites σήμερα</div></div>
+          </div>
+          <div class="era-fact"><strong>Ήξερες ότι;</strong> Το πρώτο website (info.cern.ch) είναι ακόμα online! Περιγράφει τι είναι ο Παγκόσμιος Ιστός. Ο Berners-Lee δεν έλαβε ούτε ένα λεπτό για την εφεύρεσή του.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="era" data-id="5">
+    <div class="era-left">
+      <div class="era-card fade-up" style="--card-accent:#00d4ff" onclick="toggleDetail(this)">
+        <div class="era-icon">🔍</div>
+        <div class="era-card-year-badge">1994</div>
+        <h3>Netscape & Boom των Browsers</h3>
+        <p>Κυκλοφορεί ο Netscape Navigator — ο πρώτος browser για μαζικό κοινό. Ξεκινά ο "Πόλεμος των Browsers" με τη Microsoft. Επίσης, ιδρύεται το Yahoo! και το Amazon.</p>
+        <div class="era-card-meta">
+          <span class="meta-tag">Netscape</span>
+          <span class="meta-tag">Browser Wars</span>
+          <span class="meta-tag">Amazon</span>
+        </div>
+        <button class="read-more"><span>Περισσότερα</span><span class="arrow">▾</span></button>
+        <div class="era-detail">
+          <div class="era-detail-stat">
+            <div class="d-stat"><div class="d-stat-val" style="color:#00d4ff">1994</div><div class="d-stat-lbl">Ίδρυση Amazon & Yahoo</div></div>
+            <div class="d-stat"><div class="d-stat-val" style="color:#00d4ff">10K</div><div class="d-stat-lbl">Websites στο διαδίκτυο τότε</div></div>
+          </div>
+          <div class="era-fact"><strong>Ήξερες ότι;</strong> Η Netscape έκανε IPO το 1995 και η μετοχή της εκτινάχθηκε 75% την πρώτη μέρα — σηματοδοτώντας την αρχή της "dotcom bubble".</div>
+        </div>
+      </div>
+    </div>
+    <div class="era-center">
+      <div class="era-node" onclick="activateNode(this,5)">1994</div>
+      <div class="era-vline"></div>
+    </div>
+    <div class="era-right"></div>
+  </div>
+
+  <div class="era" data-id="6">
+    <div class="era-left"></div>
+    <div class="era-center">
+      <div class="era-node" onclick="activateNode(this,6)">1998</div>
+      <div class="era-vline"></div>
+    </div>
+    <div class="era-right">
+      <div class="era-card fade-up" style="--card-accent:#7c3aed" onclick="toggleDetail(this)">
+        <div class="era-icon">🔎</div>
+        <div class="era-card-year-badge">1998</div>
+        <h3>Google — Η Αναζήτηση Αλλάζει</h3>
+        <p>Οι Larry Page και Sergey Brin ιδρύουν την Google σε ένα γκαράζ. Ο αλγόριθμος PageRank επαναστατεί στην αναζήτηση πληροφοριών στο web.</p>
+        <div class="era-card-meta">
+          <span class="meta-tag">Larry Page</span>
+          <span class="meta-tag">Sergey Brin</span>
+          <span class="meta-tag">PageRank</span>
+        </div>
+        <button class="read-more"><span>Περισσότερα</span><span class="arrow">▾</span></button>
+        <div class="era-detail">
+          <div class="era-detail-stat">
+            <div class="d-stat"><div class="d-stat-val" style="color:#7c3aed">$100K</div><div class="d-stat-lbl">Πρώτη επένδυση (Andy Bechtolsheim)</div></div>
+            <div class="d-stat"><div class="d-stat-val" style="color:#7c3aed">8.5B</div><div class="d-stat-lbl">Αναζητήσεις/ημέρα σήμερα</div></div>
+          </div>
+          <div class="era-fact"><strong>Ήξερες ότι;</strong> Αρχικά ονομαζόταν "BackRub". Το όνομα "Google" είναι ορθογραφικό λάθος του "googol" (10¹⁰⁰). Ο πρώτος server φτιάχτηκε από LEGO για να χωράει στα ράφια.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="decade-divider"><span class="decade-label">◈ ΔΕΚΑΕΤΙΑ 2000 ◈</span></div>
+
+  <div class="era" data-id="7">
+    <div class="era-left">
+      <div class="era-card fade-up" style="--card-accent:#f43f5e" onclick="toggleDetail(this)">
+        <div class="era-icon">💥</div>
+        <div class="era-card-year-badge">2000–2001</div>
+        <h3>Dotcom Bubble — Η Κρίση</h3>
+        <p>Το dotcom σκάει. Εταιρείες χάνουν 5 τρισ. δολάρια σε αξία. Εταιρείες όπως Pets.com, Webvan, Boo.com εξαφανίζονται. Αλλά Amazon, Google και eBay επιβιώνουν.</p>
+        <div class="era-card-meta">
+          <span class="meta-tag">Κατάρρευση</span>
+          <span class="meta-tag">$5T απώλεια</span>
+          <span class="meta-tag">Nasdaq -78%</span>
+        </div>
+        <button class="read-more"><span>Περισσότερα</span><span class="arrow">▾</span></button>
+        <div class="era-detail">
+          <div class="era-detail-stat">
+            <div class="d-stat"><div class="d-stat-val" style="color:#f43f5e">-78%</div><div class="d-stat-lbl">Nasdaq μέσα σε 2 χρόνια</div></div>
+            <div class="d-stat"><div class="d-stat-val" style="color:#f43f5e">$5T</div><div class="d-stat-lbl">Αξία που χάθηκε</div></div>
+          </div>
+          <div class="era-fact"><strong>Ήξερες ότι;</strong> Η Amazon έχασε το 90% της αξίας της — από $107 σε $7 η μετοχή. Σήμερα είναι μία από τις μεγαλύτερες εταιρείες στον κόσμο.</div>
+        </div>
+      </div>
+    </div>
+    <div class="era-center">
+      <div class="era-node" onclick="activateNode(this,7)">2000</div>
+      <div class="era-vline"></div>
+    </div>
+    <div class="era-right"></div>
+  </div>
+
+  <div class="era" data-id="8">
+    <div class="era-left"></div>
+    <div class="era-center">
+      <div class="era-node" onclick="activateNode(this,8)">2004</div>
+      <div class="era-vline"></div>
+    </div>
+    <div class="era-right">
+      <div class="era-card fade-up" style="--card-accent:#10b981" onclick="toggleDetail(this)">
+        <div class="era-icon">👥</div>
+        <div class="era-card-year-badge">2004</div>
+        <h3>Web 2.0 — Η Εποχή των Social Media</h3>
+        <p>Facebook, Flickr, del.icio.us — ο χρήστης γίνεται δημιουργός περιεχομένου. Γεννιέται η έννοια "Web 2.0": interactive, συμμετοχικός, κοινωνικός ιστός.</p>
+        <div class="era-card-meta">
+          <span class="meta-tag">Facebook</span>
+          <span class="meta-tag">Web 2.0</span>
+          <span class="meta-tag">UGC</span>
+        </div>
+        <button class="read-more"><span>Περισσότερα</span><span class="arrow">▾</span></button>
+        <div class="era-detail">
+          <div class="era-detail-stat">
+            <div class="d-stat"><div class="d-stat-val" style="color:#10b981">2004</div><div class="d-stat-lbl">Γέννηση Facebook</div></div>
+            <div class="d-stat"><div class="d-stat-val" style="color:#10b981">3B+</div><div class="d-stat-lbl">Facebook users σήμερα</div></div>
+          </div>
+          <div class="era-fact"><strong>Ήξερες ότι;</strong> Ο όρος "Web 2.0" επινοήθηκε από τη Darcy DiNucci το 1999 αλλά έγινε mainstream από τον Tim O'Reilly το 2004. Σηματοδοτεί τη μετάβαση από στατικές σελίδες σε δυναμικές εφαρμογές.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="decade-divider"><span class="decade-label">◈ ΔΕΚΑΕΤΙΑ 2010 ◈</span></div>
+
+  <div class="era" data-id="9">
+    <div class="era-left">
+      <div class="era-card fade-up" style="--card-accent:#f59e0b" onclick="toggleDetail(this)">
+        <div class="era-icon">📱</div>
+        <div class="era-card-year-badge">2010</div>
+        <h3>Mobile Internet — Το Internet στην Τσέπη</h3>
+        <p>Smartphones + 4G αλλάζουν τα πάντα. Το 2014 η mobile traffic ξεπερνά για πρώτη φορά το desktop. Apps, Instagram, WhatsApp — η ζωή μεταφέρεται στην οθόνη.</p>
+        <div class="era-card-meta">
+          <span class="meta-tag">4G</span>
+          <span class="meta-tag">Smartphones</span>
+          <span class="meta-tag">App Economy</span>
+        </div>
+        <button class="read-more"><span>Περισσότερα</span><span class="arrow">▾</span></button>
+        <div class="era-detail">
+          <div class="era-detail-stat">
+            <div class="d-stat"><div class="d-stat-val" style="color:#f59e0b">60%</div><div class="d-stat-lbl">Κίνηση internet από mobile</div></div>
+            <div class="d-stat"><div class="d-stat-val" style="color:#f59e0b">7B+</div><div class="d-stat-lbl">Smartphones στον κόσμο</div></div>
+          </div>
+          <div class="era-fact"><strong>Ήξερες ότι;</strong> Το 2014 η Google ανακοίνωσε ότι θα τιμωρεί sites που δεν είναι mobile-friendly στην κατάταξη αναζήτησης — η λεγόμενη "Mobilegeddon" αλλαγή.</div>
+        </div>
+      </div>
+    </div>
+    <div class="era-center">
+      <div class="era-node" onclick="activateNode(this,9)">2010</div>
+      <div class="era-vline"></div>
+    </div>
+    <div class="era-right"></div>
+  </div>
+
+  <div class="era" data-id="10">
+    <div class="era-left"></div>
+    <div class="era-center">
+      <div class="era-node" onclick="activateNode(this,10)">2014</div>
+      <div class="era-vline"></div>
+    </div>
+    <div class="era-right">
+      <div class="era-card fade-up" style="--card-accent:#7c3aed" onclick="toggleDetail(this)">
+        <div class="era-icon">☁️</div>
+        <div class="era-card-year-badge">2014</div>
+        <h3>Cloud Computing — Τα Πάντα στο Σύννεφο</h3>
+        <p>AWS, Azure, Google Cloud αλλάζουν πώς χτίζονται εταιρείες. Startup με $0 infrastructure δαπάνη μπορεί να εξυπηρετεί εκατομμύρια χρήστες από την πρώτη μέρα.</p>
+        <div class="era-card-meta">
+          <span class="meta-tag">AWS</span>
+          <span class="meta-tag">Azure</span>
+          <span class="meta-tag">SaaS</span>
+        </div>
+        <button class="read-more"><span>Περισσότερα</span><span class="arrow">▾</span></button>
+        <div class="era-detail">
+          <div class="era-detail-stat">
+            <div class="d-stat"><div class="d-stat-val" style="color:#7c3aed">$600B</div><div class="d-stat-lbl">Αγορά Cloud το 2023</div></div>
+            <div class="d-stat"><div class="d-stat-val" style="color:#7c3aed">33%</div><div class="d-stat-lbl">AWS μερίδιο αγοράς</div></div>
+          </div>
+          <div class="era-fact"><strong>Ήξερες ότι;</strong> Το 2006 η Amazon λάνσαρε το AWS — αρχικά ως εσωτερική υπηρεσία. Σήμερα το AWS φέρνει περισσότερα κέρδη από ολόκληρο το Amazon retail.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="decade-divider"><span class="decade-label">◈ ΔΕΚΑΕΤΙΑ 2020 ◈</span></div>
+
+  <div class="era" data-id="11">
+    <div class="era-left">
+      <div class="era-card fade-up" style="--card-accent:#00d4ff" onclick="toggleDetail(this)">
+        <div class="era-icon">🤖</div>
+        <div class="era-card-year-badge">2022</div>
+        <h3>ChatGPT — Η Εποχή του AI</h3>
+        <p>Το ChatGPT φτάνει 100 εκατ. χρήστες σε 2 μήνες — ταχύτερα από οποιαδήποτε εφαρμογή στην ιστορία. Η AI επανάσταση ξεκινά και αλλάζει κάθε πτυχή του internet.</p>
+        <div class="era-card-meta">
+          <span class="meta-tag">OpenAI</span>
+          <span class="meta-tag">ChatGPT</span>
+          <span class="meta-tag">Generative AI</span>
+        </div>
+        <button class="read-more"><span>Περισσότερα</span><span class="arrow">▾</span></button>
+        <div class="era-detail">
+          <div class="era-detail-stat">
+            <div class="d-stat"><div class="d-stat-val" style="color:#00d4ff">2M</div><div class="d-stat-lbl">Χρήστες σε 5 ημέρες</div></div>
+            <div class="d-stat"><div class="d-stat-val" style="color:#00d4ff">100M</div><div class="d-stat-lbl">Χρήστες σε 2 μήνες</div></div>
+          </div>
+          <div class="era-fact"><strong>Ήξερες ότι;</strong> Χρειάστηκαν 75 χρόνια για να φτάσει το τηλέφωνο τους 100 εκατ. χρήστες, 3,5 χρόνια το Facebook, 2,5 χρόνια το Instagram — και μόλις 2 μήνες το ChatGPT.</div>
+        </div>
+      </div>
+    </div>
+    <div class="era-center">
+      <div class="era-node" onclick="activateNode(this,11)">2022</div>
+      <div class="era-vline"></div>
+    </div>
+    <div class="era-right"></div>
+  </div>
+
+  <div class="era" data-id="12">
+    <div class="era-left"></div>
+    <div class="era-center">
+      <div class="era-node" onclick="activateNode(this,12)">2025</div>
+      <div class="era-vline"></div>
+    </div>
+    <div class="era-right">
+      <div class="era-card fade-up" style="--card-accent:#f43f5e" onclick="toggleDetail(this)">
+        <div class="era-icon">🚀</div>
+        <div class="era-card-year-badge">2025 — Τώρα</div>
+        <h3>Web 3.0 & AI Internet</h3>
+        <p>Το internet εξελίσσεται σε σημασιολογικό, αποκεντρωμένο, AI-powered δίκτυο. Agents, spatial computing, real-time AI — το διαδίκτυο γίνεται ευφυές.</p>
+        <div class="era-card-meta">
+          <span class="meta-tag">AI Agents</span>
+          <span class="meta-tag">Spatial Web</span>
+          <span class="meta-tag">5.4B Users</span>
+        </div>
+        <button class="read-more"><span>Περισσότερα</span><span class="arrow">▾</span></button>
+        <div class="era-detail">
+          <div class="era-detail-stat">
+            <div class="d-stat"><div class="d-stat-val" style="color:#f43f5e">5.4B</div><div class="d-stat-lbl">Internet users παγκοσμίως</div></div>
+            <div class="d-stat"><div class="d-stat-val" style="color:#f43f5e">67%</div><div class="d-stat-lbl">Του πλανήτη online</div></div>
+          </div>
+          <div class="era-fact"><strong>Τώρα:</strong> Κάθε 60 δευτερόλεπτα αποστέλλονται 231 εκατ. emails, γίνονται 6 εκατ. Google αναζητήσεις, ανεβαίνουν 500 ώρες YouTube, στέλνονται 41 εκατ. WhatsApp μηνύματα.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══ FOOTER FACTS ═══ -->
+<section class="footer-section">
+  <div class="footer-inner">
+    <div class="footer-title">Το Internet σε <span>Αριθμούς</span></div>
+    <div class="fact-grid">
+      <div class="fact-card" style="--fc-color:#00d4ff">
+        <div class="fact-card-icon">🌐</div>
+        <div class="fact-card-val">5.4B</div>
+        <div class="fact-card-lbl">χρήστες internet παγκοσμίως (2025)</div>
+      </div>
+      <div class="fact-card" style="--fc-color:#7c3aed">
+        <div class="fact-card-icon">📧</div>
+        <div class="fact-card-val">347B</div>
+        <div class="fact-card-lbl">emails αποστέλλονται κάθε μέρα</div>
+      </div>
+      <div class="fact-card" style="--fc-color:#10b981">
+        <div class="fact-card-icon">📹</div>
+        <div class="fact-card-val">500h</div>
+        <div class="fact-card-lbl">βίντεο ανεβαίνουν στο YouTube κάθε λεπτό</div>
+      </div>
+      <div class="fact-card" style="--fc-color:#f59e0b">
+        <div class="fact-card-icon">🔍</div>
+        <div class="fact-card-val">8.5B</div>
+        <div class="fact-card-lbl">Google αναζητήσεις ημερησίως</div>
+      </div>
+      <div class="fact-card" style="--fc-color:#f43f5e">
+        <div class="fact-card-icon">💬</div>
+        <div class="fact-card-val">100B</div>
+        <div class="fact-card-lbl">WhatsApp μηνύματα κάθε μέρα</div>
+      </div>
+      <div class="fact-card" style="--fc-color:#00d4ff">
+        <div class="fact-card-icon">🛒</div>
+        <div class="fact-card-val">$6.3T</div>
+        <div class="fact-card-lbl">e-commerce παγκόσμιες πωλήσεις (2024)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ NAV DOTS ═══ -->
+<nav class="nav-dots" id="navDots" aria-label="Πλοήγηση χρονογραμμής"></nav>
+
+<script>
+// ─── NAV DOTS ───
+const ERAS = document.querySelectorAll('.era[data-id]');
+const dots = document.getElementById('navDots');
+ERAS.forEach((_, i) => {
+  const d = document.createElement('button');
+  d.className = 'nav-dot'; d.setAttribute('aria-label', 'Ορόσημο '+(i+1));
+  d.onclick = () => ERAS[i].scrollIntoView({behavior:'smooth', block:'center'});
+  dots.appendChild(d);
+});
+
+// ─── READ PROGRESS ───
+window.addEventListener('scroll', () => {
+  const doc = document.documentElement;
+  const pct = (doc.scrollTop / (doc.scrollHeight - doc.clientHeight)) * 100;
+  document.getElementById('readProg').style.width = pct + '%';
+
+  // update active dot
+  ERAS.forEach((era, i) => {
+    const r = era.getBoundingClientRect();
+    dots.children[i].classList.toggle('active', r.top < window.innerHeight/2 && r.bottom > 0);
+  });
+});
+
+// ─── TOGGLE DETAIL ───
+function toggleDetail(card) {
+  const detail = card.querySelector('.era-detail');
+  const btn    = card.querySelector('.read-more');
+  if (!detail) return;
+  const open = detail.classList.toggle('open');
+  if (btn) btn.classList.toggle('open', open);
+  if (btn) btn.querySelector('span:first-child').textContent = open ? 'Λιγότερα' : 'Περισσότερα';
+}
+
+// ─── NODE ACTIVATE ───
+function activateNode(node, id) {
+  document.querySelectorAll('.era-node').forEach(n => n.classList.remove('active'));
+  node.classList.add('active');
+  const card = document.querySelector(`.era[data-id="${id}"] .era-card`);
+  if (card) {
+    const detail = card.querySelector('.era-detail');
+    if (detail && !detail.classList.contains('open')) toggleDetail(card);
+  }
+}
+
+// ─── INTERSECTION OBSERVER (fade in) ───
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.animationPlayState = 'running';
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.fade-up').forEach(el => {
+  el.style.animationPlayState = 'paused';
+  observer.observe(el);
+});
+
+// ─── PREVENT card click from toggling on button click ───
+document.querySelectorAll('.read-more').forEach(btn => {
+  btn.onclick = (e) => { e.stopPropagation(); toggleDetail(btn.closest('.era-card')); };
+});
+</script>
+</body>
+</html>
