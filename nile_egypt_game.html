@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<title>ΝΕΙΛΟΣ - Αρχαία Αίγυπτος 3D</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a0800;overflow:hidden;font-family:Georgia,serif}
+canvas{display:block}
+#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:12px 18px;pointer-events:none;background:linear-gradient(to bottom,rgba(0,0,0,.72) 0%,transparent 100%)}
+.panel{background:rgba(0,0,0,.55);border:1.5px solid #c9963d;border-radius:6px;padding:7px 16px}
+.pt{font-size:9px;letter-spacing:2px;opacity:.6;color:#f5d78e;text-transform:uppercase}
+.pv{font-size:26px;color:#ffd700;font-weight:bold;line-height:1.2}
+.ps{font-size:13px;color:#f5d78e;opacity:.85}
+#msg{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(80,40,5,.95);border:1.5px solid #ffd700;border-radius:6px;padding:9px 20px;color:#fff;font-size:15px;text-align:center;pointer-events:none;opacity:0;transition:opacity .4s;white-space:nowrap;max-width:85%}
+#ctrls{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:rgba(245,215,142,.55);font-size:11px;letter-spacing:.5px;pointer-events:none;text-align:center}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:Georgia,serif;color:#f5d78e;text-align:center;padding:30px;z-index:100}
+#ov h1{font-size:52px;color:#ffd700;letter-spacing:6px;text-shadow:0 0 25px rgba(255,200,0,.65);margin-bottom:4px}
+#ov .sub{font-size:19px;color:#ffd700;opacity:.8;margin-bottom:16px}
+#ov p{font-size:14px;margin:5px;line-height:1.7;opacity:.85}
+#ov .hiero{font-size:36px;letter-spacing:10px;margin-bottom:10px;opacity:.7}
+.gbtn{margin-top:24px;padding:12px 40px;background:linear-gradient(135deg,#b8862c,#ffd700,#b8862c);border:none;border-radius:4px;font-family:Georgia,serif;font-size:18px;color:#2a1000;cursor:pointer;letter-spacing:2px;font-weight:bold;box-shadow:0 3px 18px rgba(255,200,0,.45);transition:all .2s}
+.gbtn:hover{transform:scale(1.05);box-shadow:0 5px 28px rgba(255,200,0,.7)}
+.gold{color:#ffd700}
+</style>
+</head>
+<body>
+<div id="hud">
+  <div class="panel"><div class="pt">Σκορ</div><div class="pv" id="scr">0</div><div class="ps" id="pap">📜 0 Πάπυροι</div></div>
+  <div class="panel"><div class="pt">Ζωές</div><div class="pv" id="lvs">♥♥♥</div></div>
+</div>
+<div id="msg"></div>
+<div id="ctrls">← → ή A / D : Κίνηση &nbsp;|&nbsp; Μάζεψε Παπύρους &nbsp;|&nbsp; Απόφυγε Μούμιες!</div>
+<div id="ov">
+  <div class="hiero">𓂀 𓋹 𓅓 𓆑 𓇳</div>
+  <h1>𓊪 ΝΕΙΛΟΣ 𓊪</h1>
+  <div class="sub">Ο Γραφέας του Φαραώ</div>
+  <p>Ταξίδεψε στον ποταμό Νείλο με τη βάρκα σου</p>
+  <p>Μάζεψε τους <span class="gold">📜 παπύρους</span> με τα μηνύματα του Φαραώ</p>
+  <p>Απόφυγε τις <span class="gold">☠ μούμιες</span> που περιπλανώνται στον ποταμό</p>
+  <p>Παράδωσε τα μηνύματα στον <span class="gold">👑 Μεγάλο Φαραώ</span>!</p>
+  <button class="gbtn" id="sb">𓂀 ΕΝΑΡΞΗ ΠΑΙΧΝΙΔΙΟΥ 𓂀</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const W=window.innerWidth, H=window.innerHeight;
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(W,H); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true; renderer.setClearColor(0x2a1000);
+document.body.appendChild(renderer.domElement);
+
+const scene=new THREE.Scene();
+scene.fog=new THREE.Fog(0x3d1500,65,175);
+
+const camera=new THREE.PerspectiveCamera(58,W/H,.1,500);
+camera.position.set(0,13,18); camera.lookAt(0,0,0);
+
+scene.add(new THREE.AmbientLight(0xffcc77,.65));
+const sunL=new THREE.DirectionalLight(0xffdd88,1.8);
+sunL.position.set(18,38,12); sunL.castShadow=true;
+sunL.shadow.mapSize.set(1024,1024);
+Object.assign(sunL.shadow.camera,{left:-55,right:55,top:55,bottom:-55,near:.5,far:160});
+scene.add(sunL);
+const torch=new THREE.PointLight(0xff7700,1.4,24); scene.add(torch);
+
+// Materials
+function M(c,e,ei){return new THREE.MeshLambertMaterial({color:c,...(e?{emissive:e,emissiveIntensity:ei||.7}:{})});}
+const mat={
+  sand:M(0xe8c87a), water:M(0x1a6088), waterD:M(0x0b3a55),
+  stone:M(0xd4b483), stoneD:M(0xa08050),
+  gold:M(0xffd700), goldD:M(0xc9a000),
+  wood:M(0x7c3a18), woodL:M(0x9a5020),
+  linen:M(0xfffacc), mummy:M(0xddd0aa), mummyD:M(0xb0956a),
+  papyrus:M(0xd4a840), papyrusD:M(0xa07020),
+  skin:M(0xc8805a), palm:M(0x2d6a1f), palmT:M(0x8B6914),
+  blue:M(0x1e4080), red:M(0xcc2200), blk:M(0x111111), wht:M(0xffffff),
+  pharaoh:M(0x1a1060), glow:M(0xff3300,0xff1100), sun:M(0xffcc00,0xff8800),
+};
+
+function mk(g,m,x,y,z){
+  const me=new THREE.Mesh(g,m); me.castShadow=me.receiveShadow=true;
+  if(x!==undefined) me.position.set(x,y,z); return me;
+}
+
+// Model builders
+function mkPyramid(h,bw){
+  const g=new THREE.Group();
+  const body=mk(new THREE.ConeGeometry(bw,h,4),mat.stone); body.rotation.y=Math.PI/4; body.position.y=h/2; g.add(body);
+  const cap=mk(new THREE.ConeGeometry(.44,1.1,4),mat.gold); cap.rotation.y=Math.PI/4; cap.position.y=h+.35; g.add(cap);
+  g.add(mk(new THREE.BoxGeometry(bw*1.42,.28,bw*1.42),mat.stoneD,0,.14,0));
+  return g;
+}
+
+function mkPalm(){
+  const g=new THREE.Group();
+  g.add(mk(new THREE.CylinderGeometry(.13,.22,3.8,6),mat.palmT,0,1.9,0));
+  for(let i=0;i<7;i++){
+    const a=i/7*Math.PI*2;
+    const lf=mk(new THREE.ConeGeometry(.17,2,4),mat.palm);
+    lf.position.set(Math.cos(a)*.85,4.1+Math.sin(i)*.2,Math.sin(a)*.85);
+    lf.rotation.z=Math.cos(a)*.7; lf.rotation.x=Math.sin(a)*.7; g.add(lf);
+  }
+  return g;
+}
+
+function mkScribe(s){
+  const g=new THREE.Group(); s=s||1;
+  g.add(mk(new THREE.BoxGeometry(.48,.82,.4),mat.linen,0,.41,0));
+  g.add(mk(new THREE.SphereGeometry(.27,8,8),mat.skin,0,1.08,0));
+  g.add(mk(new THREE.BoxGeometry(.54,.3,.54),mat.linen,0,1.13,0));
+  g.add(mk(new THREE.BoxGeometry(.55,.055,.06),mat.blue,0,1.17,0));
+  const arm=mk(new THREE.BoxGeometry(.52,.09,.09),mat.skin); arm.position.set(.33,.58,0); g.add(arm);
+  const scl=mk(new THREE.CylinderGeometry(.055,.055,.36,6),mat.papyrus); scl.rotation.z=Math.PI/2; scl.position.set(.62,.56,0); g.add(scl);
+  [.09,-.09].forEach(x=>{const e=mk(new THREE.SphereGeometry(.047,5,5),mat.blk); e.position.set(x,1.1,.25); g.add(e);});
+  g.scale.setScalar(s); return g;
+}
+
+function mkBoat(){
+  const g=new THREE.Group();
+  g.add(mk(new THREE.BoxGeometry(2.4,.34,1.08),mat.wood,0,.17,0));
+  const bow=mk(new THREE.ConeGeometry(.43,.88,4),mat.woodL); bow.rotation.z=-Math.PI/2; bow.position.set(1.38,.17,0); g.add(bow);
+  const st=mk(new THREE.ConeGeometry(.32,.68,4),mat.woodL); st.rotation.z=Math.PI/2; st.position.set(-1.32,.17,0); g.add(st);
+  g.add(mk(new THREE.CylinderGeometry(.05,.05,4,5),mat.woodL,.18,2.2,0));
+  g.add(mk(new THREE.BoxGeometry(.06,2.2,1.55),mat.linen,.18,2.1,0));
+  g.add(mk(new THREE.BoxGeometry(.07,.14,1.56),mat.blue,.18,2.78,0));
+  g.add(mk(new THREE.BoxGeometry(.07,.14,1.56),mat.gold,.18,1.45,0));
+  const sc=mkScribe(.58); sc.position.set(-.38,.34,0); g.add(sc);
+  return g;
+}
+
+function mkMummy(){
+  const g=new THREE.Group();
+  g.add(mk(new THREE.BoxGeometry(1.08,.13,.88),mat.wood,0,.065,0));
+  g.add(mk(new THREE.BoxGeometry(.56,1.02,.46),mat.mummy,0,.59,0));
+  for(let i=0;i<5;i++) g.add(mk(new THREE.BoxGeometry(.58,.05,.48),mat.mummyD,0,.2+i*.18,0));
+  g.add(mk(new THREE.BoxGeometry(.48,.48,.48),mat.mummy,0,1.22,0));
+  [.13,-.13].forEach(x=>{const e=mk(new THREE.SphereGeometry(.077,5,5),mat.glow); e.position.set(x,1.26,.26); g.add(e);});
+  g.add(mk(new THREE.BoxGeometry(.88,.13,.17),mat.mummy,0,.9,0));
+  g.userData.type='mummy'; return g;
+}
+
+function mkPapyrus(){
+  const g=new THREE.Group();
+  g.add(mk(new THREE.CylinderGeometry(.5,.5,.055,8),mat.palm,0,-.2,0));
+  const sc=mk(new THREE.CylinderGeometry(.21,.21,1.02,8),mat.papyrus); sc.rotation.z=Math.PI/2; g.add(sc);
+  [.57,-.57].forEach(x=>{const c=mk(new THREE.CylinderGeometry(.28,.28,.09,8),mat.papyrusD); c.rotation.z=Math.PI/2; c.position.x=x; g.add(c);});
+  g.add(mk(new THREE.BoxGeometry(1.12,.055,.055),mat.red,0,0,0));
+  g.userData.type='papyrus'; return g;
+}
+
+function mkPharaoh(){
+  const g=new THREE.Group();
+  g.add(mk(new THREE.BoxGeometry(.88,1.28,.62),mat.pharaoh,0,.64,0));
+  g.add(mk(new THREE.CylinderGeometry(.48,.48,.11,8),mat.gold,0,1.33,0));
+  g.add(mk(new THREE.SphereGeometry(.34,10,10),mat.skin,0,1.8,0));
+  g.add(mk(new THREE.CylinderGeometry(.38,.38,.27,8),mat.red,0,2.18,0));
+  g.add(mk(new THREE.CylinderGeometry(.26,.34,.27,8),mat.wht,0,2.46,0));
+  g.add(mk(new THREE.CylinderGeometry(.13,.24,.88,8),mat.wht,0,2.85,0));
+  const crk=mk(new THREE.CylinderGeometry(.04,.04,.82,5),mat.gold); crk.position.set(.53,.93,.1); crk.rotation.z=.38; g.add(crk);
+  const fl=mk(new THREE.CylinderGeometry(.04,.04,.74,5),mat.gold); fl.position.set(-.49,.93,.1); fl.rotation.z=-.38; g.add(fl);
+  g.add(mk(new THREE.BoxGeometry(.14,.36,.11),mat.goldD,0,1.54,.36));
+  [.12,-.12].forEach(x=>{const e=mk(new THREE.SphereGeometry(.065,5,5),mat.blk); e.position.set(x,1.82,.31); g.add(e);});
+  g.scale.setScalar(1.75); return g;
+}
+
+function mkObelisk(){
+  const g=new THREE.Group();
+  g.add(mk(new THREE.BoxGeometry(.8,6.4,.8),mat.stone,0,3.2,0));
+  for(let i=0;i<7;i++) g.add(mk(new THREE.BoxGeometry(.82,.1,.82),mat.blue,0,.7+i*.8,0));
+  const t=mk(new THREE.ConeGeometry(.44,1.25,4),mat.gold); t.rotation.y=Math.PI/4; t.position.y=7.1; g.add(t);
+  return g;
+}
+
+function mkPylon(){
+  const g=new THREE.Group();
+  [-1,1].forEach(s=>{
+    g.add(mk(new THREE.BoxGeometry(3.1,8.3,2.1),mat.stone,s*3.5,4.15,0));
+    for(let i=0;i<3;i++) g.add(mk(new THREE.BoxGeometry(2.7,.75,.11),mat.blue,s*3.5,1.4+i*2.4,1.1));
+    g.add(mk(new THREE.CylinderGeometry(.1,.1,10.3,6),mat.woodL,s*5.8,5.15,0));
+    g.add(mk(new THREE.BoxGeometry(.1,2.7,1.5),mat.red,s*5.8,9.2,.75));
+  });
+  g.add(mk(new THREE.BoxGeometry(10.5,1.55,2.1),mat.stone,0,9.1,0));
+  return g;
+}
+
+function mkSunDisc(){
+  const g=new THREE.Group();
+  g.add(mk(new THREE.SphereGeometry(3.2,18,18),mat.sun,0,0,0));
+  for(let i=0;i<12;i++){
+    const a=i/12*Math.PI*2;
+    const r=mk(new THREE.BoxGeometry(.22,3.2,.07),mat.sun);
+    r.position.set(Math.cos(a)*4.5,Math.sin(a)*4.5,0); r.rotation.z=a; g.add(r);
+  }
+  return g;
+}
+
+// Terrain tiles
+const TILE=120;
+function mkTile(){
+  const g=new THREE.Group();
+  const rv=mk(new THREE.PlaneGeometry(10,TILE+4,4,30),mat.water); rv.rotation.x=-Math.PI/2; rv.position.y=.05; g.add(rv);
+  g.add(mk(new THREE.PlaneGeometry(10,TILE+4),mat.waterD,-0,-.08,0));
+  const lb=new THREE.Mesh(new THREE.PlaneGeometry(28,TILE+4),mat.sand); lb.rotation.x=-Math.PI/2; lb.position.set(-19,0,0); lb.receiveShadow=true; g.add(lb);
+  const rb=new THREE.Mesh(new THREE.PlaneGeometry(28,TILE+4),mat.sand); rb.rotation.x=-Math.PI/2; rb.position.set(19,0,0); rb.receiveShadow=true; g.add(rb);
+  return g;
+}
+const tiles=[];
+for(let i=0;i<3;i++){const t=mkTile(); t.position.z=-i*TILE; scene.add(t); tiles.push(t);}
+
+// Decoration placer
+function placeDeco(bz){
+  // Left pyramids
+  for(let i=0;i<2;i++){const sz=3.5+Math.random()*5; const p=mkPyramid(sz,sz*.92); p.position.set(-19-Math.random()*6,0,bz-15-Math.random()*90); scene.add(p);}
+  // Right pyramids
+  for(let i=0;i<2;i++){const sz=2.5+Math.random()*4; const p=mkPyramid(sz,sz*.92); p.position.set(19+Math.random()*5,0,bz-15-Math.random()*90); scene.add(p);}
+  // Palms
+  for(let i=0;i<9;i++){const pl=mkPalm(); const s=Math.random()>.5?1:-1; pl.position.set(s*(6.5+Math.random()*10),0,bz-Math.random()*TILE); pl.scale.setScalar(.7+Math.random()*.55); scene.add(pl);}
+  // Obelisks
+  if(Math.random()<.6){[-1,1].forEach(s=>{const ob=mkObelisk(); ob.position.set(s*8,0,bz-25-Math.random()*60); scene.add(ob);});}
+}
+placeDeco(0); placeDeco(-140); placeDeco(-280);
+
+// Temple end-goal
+const pylon=mkPylon(); pylon.position.set(0,0,-570); scene.add(pylon);
+const pharaoh=mkPharaoh(); pharaoh.position.set(0,0,-564); scene.add(pharaoh);
+[-1,1].forEach(s=>{const ob=mkObelisk(); ob.position.set(s*9,0,-566); scene.add(ob);});
+
+// Sun disc
+const sunDisc=mkSunDisc(); sunDisc.position.set(-38,40,-90); scene.add(sunDisc);
+// Sky
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(300,16,16),new THREE.MeshBasicMaterial({color:0x3a1000,side:THREE.BackSide})));
+
+// Player
+const playerBoat=mkBoat(); playerBoat.position.set(0,.15,0); scene.add(playerBoat);
+
+// Templates for cloning
+const _mTpl=mkMummy(), _pTpl=mkPapyrus();
+
+// Game state
+let running=false, score=0, lives=3, papyri=0, spd=6, dist=0;
+let invinc=false, invT=0, t=0;
+const obs=[], cols=[], rips=[], keys={};
+let mT=0, pT=0, mI=3.4, pI=1.7, nextDecoZ=-420;
+
+const msgs=[
+  '📜 «Ο Ραμσής προστάζει: χτίστε μεγαλύτερες πυραμίδες!»',
+  '📜 «Ο Ιπέπερ γράφει: ο Νείλος πλημμυρίζει!»',
+  '📜 «Ο Ra ευλογεί το ταξίδι σου, γραφέα!»',
+  '📜 «Μυστικά ιερογλυφικά αποκαλύφθηκαν στη Θήβα!»',
+  '📜 «1000 λίτρα σταριού για το παλάτι!»',
+  '📜 «Ο Ανούβης φρουρεί τις ψυχές του Νείλου!»',
+  '📜 «Εορτή Ra στην Αλεξάνδρεια!»',
+  '📜 «Κλεοπάτρα χαιρετά τον πιστό γραφέα!»',
+  '📜 «Θησαυρός κρυμμένος στις πυραμίδες!»',
+  '📜 «Ο Φαραώ ανυπομονεί για τα μηνύματά σου!»',
+];
+
+function uiUpdate(){
+  document.getElementById('scr').textContent=score;
+  document.getElementById('pap').textContent='📜 '+papyri+' Πάπυροι';
+  document.getElementById('lvs').textContent='♥'.repeat(lives)+'♡'.repeat(Math.max(0,3-lives));
+}
+function showMsg(m){
+  const el=document.getElementById('msg'); el.textContent=m; el.style.opacity='1';
+  clearTimeout(el._t); el._t=setTimeout(()=>el.style.opacity='0',3200);
+}
+function d2d(a,b){const dx=a.position.x-b.position.x,dz=a.position.z-b.position.z; return Math.sqrt(dx*dx+dz*dz);}
+function addRip(p){
+  const rm=new THREE.MeshLambertMaterial({color:0x55ccee,transparent:true,opacity:.5});
+  const r=new THREE.Mesh(new THREE.RingGeometry(.15,.42,12),rm); r.rotation.x=-Math.PI/2;
+  const g=new THREE.Group(); g.add(r);
+  g.position.copy(p); g.position.y=.1; g.userData={life:1,mat:rm}; rips.push(g); scene.add(g);
+}
+function hitPlayer(){
+  if(invinc) return;
+  lives--; uiUpdate(); invinc=true; invT=2.2;
+  showMsg('☠ Μούμια! Πρόσεξε!');
+  if(lives<=0) endGame();
+}
+function endGame(){
+  running=false;
+  const ov=document.getElementById('ov');
+  ov.innerHTML=`<div class="hiero">𓂀 𓋹 𓅓</div><h1>ΤΕΛΟΣ ΤΑΞΙΔΙΟΥ</h1><p style="font-size:28px;color:#ffd700;margin:12px 0">Σκορ: ${score}</p><p>Πάπυροι: <span class="gold">${papyri}</span></p><p>Απόσταση: <span class="gold">${Math.round(dist)} μέτρα</span></p><p style="margin-top:12px;opacity:.55;font-size:12px">«Ο Νείλος θυμάται όλα τα ταξίδια»</p><button class="gbtn" onclick="restart()">𓂀 ΠΑΙΞΕ ΞΑΝΑ 𓂀</button>`;
+  ov.style.display='flex';
+}
+window.start=function(){document.getElementById('ov').style.display='none'; running=true; clk.start();}
+window.restart=function(){
+  score=0; lives=3; papyri=0; spd=6; dist=0; invinc=false; mI=3.4; pI=1.7;
+  obs.forEach(o=>scene.remove(o)); obs.length=0;
+  cols.forEach(c=>scene.remove(c)); cols.length=0;
+  rips.forEach(r=>scene.remove(r)); rips.length=0;
+  playerBoat.position.set(0,.15,0); playerBoat.visible=true;
+  uiUpdate();
+  document.getElementById('ov').style.display='none';
+  document.getElementById('msg').style.opacity='0';
+  running=true;
+}
+document.getElementById('sb').onclick=start;
+
+window.addEventListener('keydown',e=>{keys[e.key]=true; if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();});
+window.addEventListener('keyup',e=>{keys[e.key]=false;});
+
+// Touch
+let tx0=null;
+document.addEventListener('touchstart',e=>{tx0=e.touches[0].clientX;});
+document.addEventListener('touchmove',e=>{e.preventDefault(); if(tx0===null)return; const dx=e.touches[0].clientX-tx0; keys['ArrowLeft']=dx<-18; keys['ArrowRight']=dx>18;},{passive:false});
+document.addEventListener('touchend',()=>{keys['ArrowLeft']=keys['ArrowRight']=false; tx0=null;});
+
+uiUpdate();
+const clk=new THREE.Clock();
+
+function spawnMummy(){
+  const mu=_mTpl.clone();
+  const s=Math.random()>.5?1:-1;
+  mu.position.set(s*8.5,.1,playerBoat.position.z-26-Math.random()*10);
+  mu.userData.dir=-s; mu.userData.spd=1.8+Math.random()*spd*.35;
+  obs.push(mu); scene.add(mu); addRip(mu.position);
+}
+function spawnPapyrus(){
+  const sc=_pTpl.clone();
+  sc.position.set((Math.random()-.5)*7.5,.3,playerBoat.position.z-22-Math.random()*8);
+  cols.push(sc); scene.add(sc);
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clk.getDelta(),.05);
+  t+=dt;
+  sunDisc.rotation.z+=dt*.12;
+
+  if(!running){renderer.render(scene,camera); return;}
+
+  dist+=spd*dt;
+  spd=6+dist*.013;
+  score=Math.floor(dist)+papyri*60;
+  uiUpdate();
+  mI=Math.max(1.1,3.4-dist*.0045);
+  pI=Math.max(.85,1.7-dist*.0022);
+
+  // Player
+  const px=playerBoat.position; const ms=6.8; let turn=0;
+  if((keys['ArrowLeft']||keys['a']||keys['A'])&&px.x>-4.3){px.x-=ms*dt; turn=-1;}
+  else if((keys['ArrowRight']||keys['d']||keys['D'])&&px.x<4.3){px.x+=ms*dt; turn=1;}
+  playerBoat.rotation.y+=(-turn*.1-playerBoat.rotation.y)*.16;
+  px.z-=spd*dt;
+  px.y=.15+Math.sin(t*2.8)*.03;
+  playerBoat.rotation.z=Math.sin(t*2.4)*.018;
+  playerBoat.rotation.x=Math.sin(t*1.7)*.012;
+
+  // Camera
+  camera.position.z+=(px.z+18-camera.position.z)*.1;
+  camera.position.x+=(px.x*.25-camera.position.x)*.08;
+  camera.lookAt(px.x*.3,1,px.z-4);
+  torch.position.set(px.x,5,px.z+5);
+
+  // Tile recycling
+  tiles.forEach(tile=>{if(tile.position.z-px.z>TILE+8) tile.position.z-=TILE*3;});
+
+  // Spawn decorations
+  if(px.z<nextDecoZ){placeDeco(nextDecoZ+10); nextDecoZ-=140;}
+
+  // Spawners
+  mT-=dt; if(mT<=0){spawnMummy(); mT=mI;}
+  pT-=dt; if(pT<=0){spawnPapyrus(); pT=pI;}
+
+  // Mummies
+  for(let i=obs.length-1;i>=0;i--){
+    const mu=obs[i];
+    mu.position.x+=mu.userData.dir*mu.userData.spd*dt;
+    mu.rotation.y+=dt*2;
+    mu.position.y=.1+Math.abs(Math.sin(t*2.2+i))*.07;
+    if(d2d(mu,playerBoat)<1.22){hitPlayer(); scene.remove(mu); obs.splice(i,1); continue;}
+    if(mu.position.x>13||mu.position.x<-13||mu.position.z-px.z>13){scene.remove(mu); obs.splice(i,1);}
+  }
+
+  // Papyrus
+  for(let i=cols.length-1;i>=0;i--){
+    const sc=cols[i];
+    sc.rotation.y+=dt*1.6;
+    sc.position.y=.3+Math.sin(t*2.5+i*1.3)*.07;
+    if(d2d(sc,playerBoat)<1.12){
+      papyri++; score+=60;
+      showMsg(msgs[Math.floor(Math.random()*msgs.length)]);
+      addRip(sc.position); scene.remove(sc); cols.splice(i,1); continue;
+    }
+    if(sc.position.z-px.z>12){scene.remove(sc); cols.splice(i,1);}
+  }
+
+  // Ripples
+  for(let i=rips.length-1;i>=0;i--){
+    const rp=rips[i]; rp.userData.life-=dt*1.8;
+    const sc=1+(1-rp.userData.life)*2.5; rp.scale.set(sc,1,sc);
+    rp.userData.mat.opacity=Math.max(0,rp.userData.life*.5);
+    if(rp.userData.life<=0){scene.remove(rp); rips.splice(i,1);}
+  }
+
+  // Invincibility
+  if(invinc){
+    invT-=dt; playerBoat.visible=Math.floor(t*10)%2===0;
+    if(invT<=0){invinc=false; playerBoat.visible=true;}
+  }
+
+  renderer.render(scene,camera);
+}
+animate();
+
+window.addEventListener('resize',()=>{
+  const nw=window.innerWidth, nh=window.innerHeight;
+  camera.aspect=nw/nh; camera.updateProjectionMatrix(); renderer.setSize(nw,nh);
+});
+</script>
+</body>
+</html>
