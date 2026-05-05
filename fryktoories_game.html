@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ΦΡΥΚΤΩΡΙΕΣ — Ο Κώδικας των Αρχαίων Ελλήνων</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow:hidden;background:#000;font-family:'Georgia',serif;user-select:none}
+canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;display:block}
+
+#hud{position:fixed;top:0;left:0;right:0;padding:10px 16px;display:flex;justify-content:space-between;align-items:flex-start;background:linear-gradient(rgba(0,0,0,.75),transparent);pointer-events:none;z-index:10}
+.hpanel{background:rgba(0,0,0,.6);border:1.5px solid #b8862c;border-radius:5px;padding:6px 14px}
+.hpt{font-size:9px;letter-spacing:2px;opacity:.6;color:#f5d78e;text-transform:uppercase}
+.hpv{font-size:22px;color:#ffd700;font-weight:bold;line-height:1.2}
+.hps{font-size:12px;color:#f5d78e;opacity:.8}
+
+#word-bar{position:fixed;top:70px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:10;align-items:center}
+.lbox{width:44px;height:52px;border:2px solid #b8862c;border-radius:5px;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;font-size:26px;color:#ffd700;transition:all .35s}
+.lbox.cur{border-color:#fff;box-shadow:0 0 14px rgba(255,255,255,.45);animation:pcur 1s ease-in-out infinite}
+.lbox.ok{background:rgba(20,70,10,.8);border-color:#6ecf3d;color:#9eff60}
+.lbox.bad{background:rgba(90,10,10,.8);border-color:#e04444;color:#ff8888}
+@keyframes pcur{0%,100%{box-shadow:0 0 6px rgba(255,200,0,.3)}50%{box-shadow:0 0 22px rgba(255,200,0,.9)}}
+
+#status{position:fixed;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.78);border:1.5px solid #b8862c;border-radius:6px;padding:8px 20px;color:#fff;font-size:14px;text-align:center;z-index:10;white-space:pre-line;max-width:85%;pointer-events:none;transition:opacity .3s;bottom:228px}
+
+/* PINAKIDA */
+#pnk{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(15,8,0,.92);border:2px solid #b8862c;border-radius:9px;padding:10px 14px;z-index:10}
+#pnk table{border-collapse:collapse}
+#pnk th{font-size:11px;letter-spacing:1px;font-weight:bold;padding:6px;text-align:center;width:46px;height:36px;border:1px solid rgba(184,134,44,.2)}
+#pnk th.col-h{color:#ff9944}
+#pnk th.row-h{color:#44aaff}
+#pnk th.corner{color:rgba(184,134,44,.4);font-size:9px}
+#pnk td{width:46px;height:46px;text-align:center;vertical-align:middle;font-size:19px;color:#f5d78e;border:1px solid rgba(184,134,44,.2);cursor:pointer;border-radius:3px;transition:all .2s;position:relative}
+#pnk td:hover{background:rgba(184,134,44,.2);color:#ffd700;transform:scale(1.05)}
+#pnk td.hl-row{background:rgba(68,170,255,.12)}
+#pnk td.hl-col{background:rgba(255,153,68,.12)}
+#pnk td.hl-both{background:rgba(255,200,0,.22);border:2px solid #ffd700!important;animation:pcell .7s ease-in-out infinite;font-weight:bold;color:#ffd700}
+#pnk td.fl-ok{background:rgba(30,180,30,.55)!important;border:2px solid #6ecf3d!important;animation:none!important}
+#pnk td.fl-bad{background:rgba(180,20,20,.55)!important;border:2px solid #e04444!important;animation:none!important}
+#pnk td.disabled{pointer-events:none}
+@keyframes pcell{0%,100%{box-shadow:0 0 4px rgba(255,200,0,.3)}50%{box-shadow:0 0 14px rgba(255,200,0,.8)}}
+
+/* TORCH PANEL */
+#tpanel{position:fixed;top:50%;right:14px;transform:translateY(-50%);background:rgba(0,0,0,.75);border:1.5px solid #b8862c;border-radius:8px;padding:12px 10px;z-index:10;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:78px}
+.tsec{font-size:9px;letter-spacing:1px;color:#b8862c;text-align:center;line-height:1.4}
+.tdots{display:flex;gap:5px;margin:4px 0}
+.tdot{width:18px;height:18px;border-radius:50%;border:1.5px solid #444;background:#1a1209;transition:all .5s}
+.tdot.L{background:#44aaff;border-color:#88ccff;box-shadow:0 0 9px #44aaff}
+.tdot.R{background:#ff8844;border-color:#ffcc66;box-shadow:0 0 9px #ff9944}
+.tsep{width:100%;height:1px;background:rgba(184,134,44,.3);margin:3px 0}
+#tpanel .count-l{font-size:22px;font-weight:bold;color:#44aaff}
+#tpanel .count-r{font-size:22px;font-weight:bold;color:#ff8844}
+
+/* LEGEND */
+#leg{position:fixed;bottom:12px;left:12px;background:rgba(0,0,0,.72);border:1.5px solid #b8862c;border-radius:6px;padding:9px 13px;z-index:10;color:#f5d78e;font-size:11px}
+.lg{display:flex;align-items:center;gap:7px;margin:3px 0}
+.lgd{width:13px;height:13px;border-radius:50%}
+
+/* OVERLAY */
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;padding:24px;color:#f5d78e;text-align:center}
+#ov h1{font-size:46px;color:#ffd700;letter-spacing:5px;text-shadow:0 0 28px rgba(255,200,0,.6);margin-bottom:4px}
+#ov .sub{font-size:17px;color:#ffd700;opacity:.8;margin-bottom:16px}
+#ov .info{font-size:13px;max-width:580px;line-height:1.85;opacity:.9;margin:3px 0}
+#ov .gold{color:#ffd700}
+#ov .blue{color:#66bbff}
+#ov .orange{color:#ff9944}
+.gbtn{margin-top:22px;padding:12px 40px;background:linear-gradient(135deg,#9a6e1a,#ffd700,#9a6e1a);border:none;border-radius:4px;font-family:Georgia;font-size:18px;color:#1a0900;cursor:pointer;letter-spacing:2px;font-weight:bold;box-shadow:0 3px 18px rgba(255,200,0,.4);transition:all .2s}
+.gbtn:hover{transform:scale(1.05);box-shadow:0 6px 30px rgba(255,200,0,.7)}
+
+/* MINI GRID in intro */
+.mgrid{display:inline-grid;grid-template-columns:repeat(6,40px);grid-template-rows:auto;gap:2px;margin:12px auto}
+.mgrid div{display:flex;align-items:center;justify-content:center;height:36px;border:1px solid rgba(184,134,44,.25);border-radius:2px;font-size:14px}
+.mgrid .mh{color:#b8862c;font-size:10px;letter-spacing:1px;background:rgba(0,0,0,.35)}
+.mgrid .mc{color:#f5d78e;background:rgba(20,10,0,.5)}
+.mgrid .mrh{color:#44aaff;font-weight:bold;background:rgba(0,0,0,.35)}
+.mgrid .mch{color:#ff9944;font-weight:bold;background:rgba(0,0,0,.35)}
+
+#lives{position:fixed;top:70px;right:14px;background:rgba(0,0,0,.65);border:1.5px solid #b8862c;border-radius:5px;padding:5px 12px;color:#f5d78e;font-size:14px;z-index:10}
+</style>
+</head>
+<body>
+<canvas id="gc"></canvas>
+
+<div id="hud">
+  <div class="hpanel"><div class="hpt">Σκορ</div><div class="hpv" id="sc">0</div></div>
+  <div class="hpanel"><div class="hpt">Λέξη</div><div class="hpv" id="rnd">1/5</div><div class="hps" id="wtitle"></div></div>
+  <div class="hpanel"><div class="hpt">Γράμμα</div><div class="hpv" id="lpos">-</div></div>
+</div>
+
+<div id="word-bar" style="display:none"></div>
+<div id="status" style="display:none"></div>
+
+<div id="tpanel" style="display:none">
+  <div class="tsec">ΑΡΙΣΤ.<br>ΠΥΡΣΟΙ<br>(ΓΡΑΜΜΗ)</div>
+  <div class="tdots" id="ld"></div>
+  <div class="count-l" id="lc">0</div>
+  <div class="tsep"></div>
+  <div class="tsec">ΔΕΞΙΟΙ<br>ΠΥΡΣΟΙ<br>(ΣΤΗΛΗ)</div>
+  <div class="tdots" id="rd"></div>
+  <div class="count-r" id="rc">0</div>
+</div>
+
+<div id="pnk" style="display:none">
+  <table id="gt"></table>
+</div>
+
+<div id="leg" style="display:none">
+  <div style="font-size:9px;letter-spacing:2px;color:#b8862c;margin-bottom:6px">ΠΙΝΑΚΙΔΑ</div>
+  <div class="lg"><div class="lgd" style="background:#44aaff;box-shadow:0 0 6px #44aaff"></div><span>Αριστ. = Γραμμή</span></div>
+  <div class="lg"><div class="lgd" style="background:#ff9944;box-shadow:0 0 6px #ff9944"></div><span>Δεξί = Στήλη</span></div>
+  <div style="margin-top:8px;font-size:10px;opacity:.6">Μέτρα τους πυρσούς<br>→ γραμμή × στήλη</div>
+</div>
+
+<div id="lives" style="display:none">Ζωές: <span id="lv">♥♥♥</span></div>
+
+<!-- OVERLAY -->
+<div id="ov">
+  <div style="font-size:30px;letter-spacing:8px;opacity:.65;margin-bottom:8px">🔥 🔥 🔥</div>
+  <h1>ΦΡΥΚΤΩΡΙΕΣ</h1>
+  <div class="sub">Ο Κώδικας των Αρχαίων Ελλήνων</div>
+  <p class="info">Οι αρχαίοι Έλληνες επικοινωνούσαν με <span class="gold">πυρσούς (δάδες)</span> από φρυκτωρία σε φρυκτωρία.</p>
+  <p class="info">Κάθε φρυκτωρία είχε <span class="gold">δύο τοίχους με 5 πυρσούς</span> ο καθένας.</p>
+  <p class="info">Οι <span class="blue">αριστεροί πυρσοί</span> δείχνουν τη <span class="blue">γραμμή</span> (οριζόντια) της πινακίδας.</p>
+  <p class="info">Οι <span class="orange">δεξιοί πυρσοί</span> δείχνουν τη <span class="orange">στήλη</span> (κάθετη) της πινακίδας.</p>
+  <div class="mgrid" id="ig"></div>
+  <p class="info" style="margin-top:6px"><strong style="color:#ffd700">Μέτρα πόσοι πυρσοί ανάβουν</strong> σε κάθε τοίχο και βρες το γράμμα!</p>
+  <button class="gbtn" id="sb">⚔ &nbsp;ΕΝΑΡΞΗ ΠΑΙΧΝΙΔΙΟΥ&nbsp; ⚔</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ===================== ALPHABET GRID =====================
+const GRID = [
+  ['Α','Β','Γ','Δ','Ε'],
+  ['Ζ','Η','Θ','Ι','Κ'],
+  ['Λ','Μ','Ν','Ξ','Ο'],
+  ['Π','Ρ','Σ','Τ','Υ'],
+  ['Φ','Χ','Ψ','Ω','·'],
+];
+function getCode(lt){for(let r=0;r<5;r++)for(let c=0;c<5;c++)if(GRID[r][c]===lt)return{row:r+1,col:c+1};return null;}
+
+const WORDS=[
+  {w:'ΝΙΚΗ',   hint:'Η νίκη της μάχης!'},
+  {w:'ΗΤΤΑ',   hint:'Μήνυμα ήττας...'},
+  {w:'ΑΡΗΣ',   hint:'Ο θεός του πολέμου'},
+  {w:'ΠΟΛΙΣ',  hint:'Η πόλη προστατεύεται'},
+  {w:'ΑΘΗΝΑ',  hint:'Η πρωτεύουσα καλεί'},
+];
+
+// Build intro grid
+(()=>{
+  const g=document.getElementById('ig');
+  let h=document.createElement('div'); h.className='mh'; h.style.color='rgba(184,134,44,.4)'; h.textContent='γρ/στ'; g.appendChild(h);
+  for(let c=1;c<=5;c++){let d=document.createElement('div'); d.className='mch'; d.textContent=c; g.appendChild(d);}
+  for(let r=0;r<5;r++){
+    let rh=document.createElement('div'); rh.className='mrh'; rh.textContent=r+1; g.appendChild(rh);
+    for(let c=0;c<5;c++){let d=document.createElement('div'); d.className='mc'; d.textContent=GRID[r][c]; g.appendChild(d);}
+  }
+})();
+
+// Build pinakida table
+(()=>{
+  const tbl=document.getElementById('gt');
+  const hr=tbl.insertRow();
+  let tc=document.createElement('th'); tc.className='corner'; tc.textContent='Γρ\\Στ'; hr.appendChild(tc);
+  for(let c=1;c<=5;c++){let th=document.createElement('th'); th.className='col-h'; th.textContent=c; hr.appendChild(th);}
+  for(let r=0;r<5;r++){
+    const row=tbl.insertRow();
+    let rh=document.createElement('th'); rh.className='row-h'; rh.textContent=r+1; row.appendChild(rh);
+    for(let c=0;c<5;c++){
+      const td=row.insertCell();
+      td.textContent=GRID[r][c]; td.dataset.r=r; td.dataset.c=c;
+      td.onclick=()=>onCell(r,c);
+    }
+  }
+})();
+
+// Build torch dots
+(()=>{
+  const ld=document.getElementById('ld'); const rd=document.getElementById('rd');
+  for(let i=0;i<5;i++){
+    let dl=document.createElement('div'); dl.className='tdot'; dl.id='ld'+i; ld.appendChild(dl);
+    let dr=document.createElement('div'); dr.className='tdot'; dr.id='rd'+i; rd.appendChild(dr);
+  }
+})();
+
+function setDots(L,R){
+  for(let i=0;i<5;i++){
+    document.getElementById('ld'+i).className='tdot'+(i<L?' L':'');
+    document.getElementById('rd'+i).className='tdot'+(i<R?' R':'');
+  }
+  document.getElementById('lc').textContent=L;
+  document.getElementById('rc').textContent=R;
+}
+
+function gridHL(row,col,mode){
+  document.querySelectorAll('#gt td').forEach(td=>{
+    const r=+td.dataset.r, c=+td.dataset.c;
+    td.classList.remove('hl-row','hl-col','hl-both','disabled');
+    if(mode==='show'){
+      if(r===row-1&&c===col-1) td.classList.add('hl-both');
+      else if(r===row-1) td.classList.add('hl-row');
+      else if(c===col-1) td.classList.add('hl-col');
+    }
+    if(mode==='input') td.classList.remove('disabled');
+    if(mode==='none') td.classList.remove('hl-row','hl-col','hl-both');
+  });
+}
+
+function flashCell(r,c,ok){
+  document.querySelectorAll('#gt td').forEach(td=>{
+    if(+td.dataset.r===r&&+td.dataset.c===c){td.classList.add(ok?'fl-ok':'fl-bad'); setTimeout(()=>td.classList.remove('fl-ok','fl-bad'),900);}
+  });
+}
+
+// ===================== THREE.JS SCENE =====================
+const W=window.innerWidth, H=window.innerHeight;
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('gc'),antialias:true});
+renderer.setSize(W,H); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.setClearColor(0x06060f);
+
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x06060f,.022);
+
+const camera=new THREE.PerspectiveCamera(55,W/H,.1,300);
+camera.position.set(0,7,22); camera.lookAt(0,3,0);
+
+scene.add(new THREE.AmbientLight(0x112233,.6));
+const moonL=new THREE.DirectionalLight(0x7788bb,1.4);
+moonL.position.set(-20,35,15); moonL.castShadow=true;
+moonL.shadow.mapSize.set(1024,1024);
+Object.assign(moonL.shadow.camera,{left:-45,right:45,top:45,bottom:-45});
+scene.add(moonL);
+
+function M(c,e,ei){return new THREE.MeshLambertMaterial({color:c,...(e?{emissive:e,emissiveIntensity:ei||.8}:{})});}
+const mats={
+  stone:M(0x9e9070), stoneD:M(0x7a6a4a), stoneDark:M(0x4a4030),
+  ground:M(0x3a4a2a), sand:M(0x7a6a3a),
+  torchW:M(0x8B5a1a), torchB:M(0xcd8a3a),
+  fireLit:M(0xff5500,0xff2200,1.2), fireOff:M(0x2a1a0a),
+  sky:new THREE.MeshBasicMaterial({color:0x04040e,side:THREE.BackSide}),
+  tunic:M(0xcc4a00), armor:M(0xcd7f32), shield:M(0x8B0a00), helm:M(0xaa6820),
+  crest:M(0xcc1100), wood:M(0x7B5a14), skin:M(0xba7040),
+  mountain:M(0x15200a),
+};
+
+function mk(g,m,x,y,z,rx,ry,rz){
+  const me=new THREE.Mesh(g,m); me.castShadow=me.receiveShadow=true;
+  if(x!==undefined) me.position.set(x,y,z);
+  if(rx!==undefined) me.rotation.set(rx,ry,rz);
+  return me;
+}
+
+// Sky & stars
+scene.add(mk(new THREE.SphereGeometry(200,16,16),mats.sky));
+(()=>{
+  const sg=new THREE.BufferGeometry(); const pos=[];
+  for(let i=0;i<900;i++){
+    const t=Math.random()*Math.PI*2, p=Math.random()*Math.PI, r=185+Math.random()*12;
+    pos.push(Math.sin(p)*Math.cos(t)*r, Math.cos(p)*r, Math.sin(p)*Math.sin(t)*r);
+  }
+  sg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xddddff,size:.55})));
+})();
+
+// Moon
+const moonMesh=mk(new THREE.SphereGeometry(5,12,12),new THREE.MeshBasicMaterial({color:0xddeeff}));
+moonMesh.position.set(-70,80,-120); scene.add(moonMesh);
+const moonPt=new THREE.PointLight(0x8899cc,1.8,250); moonPt.position.copy(moonMesh.position); scene.add(moonPt);
+
+// Ground
+const groundMesh=mk(new THREE.PlaneGeometry(80,60),mats.ground,0,-.02,0,-Math.PI/2,0,0); scene.add(groundMesh);
+const platform=mk(new THREE.BoxGeometry(34,1.4,16),mats.stone,0,-.7,0); scene.add(platform);
+const step=mk(new THREE.BoxGeometry(36,.5,18),mats.stoneD,0,-1.45,0); scene.add(step);
+// Stone tiles
+for(let i=0;i<7;i++) for(let j=0;j<3;j++){
+  const sl=mk(new THREE.BoxGeometry(3.9,.06,3.9),mats.stoneDark); sl.position.set(-12+i*4.1,.03,-5.5+j*3.9); scene.add(sl);
+}
+
+// Mountains background
+[[-50,-55,22,10],[-30,-52,18,8],[25,-50,20,9],[50,-54,24,11],[-15,-53,16,7],[38,-51,19,9],[-62,-56,20,10],[60,-55,22,9]].forEach(([x,z,h,w])=>{
+  const m=mk(new THREE.ConeGeometry(w,h,5),mats.mountain); m.position.set(x,-3,z); scene.add(m);
+});
+
+// ==== WALLS ====
+function buildWall(side){
+  const g=new THREE.Group(); const sx=side*8.5;
+  // Main wall body
+  const body=mk(new THREE.BoxGeometry(16,4,1.4),mats.stone,0,2,0); g.add(body);
+  // Top rim
+  g.add(mk(new THREE.BoxGeometry(16,.55,1.4),mats.stoneD,0,4.28,0));
+  // Crenellations
+  for(let i=0;i<5;i++){const cr=mk(new THREE.BoxGeometry(2,.85,1.4),mats.stoneDark,-7.2+i*3.5,5.1,0); g.add(cr);}
+  // Side pillars
+  [-8,8].forEach(x=>{const p=mk(new THREE.BoxGeometry(1.2,5.5,1.4),mats.stoneD,x,2.75,0); g.add(p);});
+  // Stone steps at base
+  for(let s=0;s<3;s++){g.add(mk(new THREE.BoxGeometry(16,.22,1.4),mats.stoneDark,0,.22*s,0));}
+  g.position.x=sx;
+  return g;
+}
+const leftW=buildWall(-1); scene.add(leftW);
+const rightW=buildWall(1); scene.add(rightW);
+
+// Center dioptra / sighting device
+const dioGroup=new THREE.Group();
+[-1.2,1.2].forEach(x=>{dioGroup.add(mk(new THREE.BoxGeometry(.22,4.5,.22),mats.stoneD,x,2.25,0));});
+dioGroup.add(mk(new THREE.BoxGeometry(2.42,.22,.22),mats.stoneD,0,4.6,0));
+dioGroup.add(mk(new THREE.BoxGeometry(.08,3,.08),mats.stoneDark,0,3,0));
+dioGroup.position.set(0,.02,.9); scene.add(dioGroup);
+
+// ==== TORCHES ====
+const TORCH_OBJS={L:[],R:[]};
+
+function buildTorch(x,y,z){
+  const g=new THREE.Group();
+  g.add(mk(new THREE.CylinderGeometry(.07,.07,1.8,7),mats.torchW,0,.9,0));
+  g.add(mk(new THREE.CylinderGeometry(.18,.12,.28,8),mats.torchB,0,1.92,0));
+  const flame=mk(new THREE.SphereGeometry(.2,8,8),mats.fireOff,0,2.2,0);
+  const ptLight=new THREE.PointLight(0xff5500,0,7); ptLight.position.set(0,2.2,0);
+  g.add(flame); g.add(ptLight);
+  g.position.set(x,y,z);
+  g.userData={flame,ptLight,lit:false};
+  return g;
+}
+
+// Left wall torches: x from -14.5 to -6.5 (side=-1, base x=-8.5, relative from -6 to +6)
+[-13.5,-11,-8.5,-6,-3.5].forEach(x=>{
+  const t=buildTorch(x,1.2,-.62); TORCH_OBJS.L.push(t); scene.add(t);
+});
+// Right wall torches
+[3.5,6,8.5,11,13.5].forEach(x=>{
+  const t=buildTorch(x,1.2,-.62); TORCH_OBJS.R.push(t); scene.add(t);
+});
+
+function setTorchLit(side,idx,lit){
+  const obj=TORCH_OBJS[side][idx];
+  obj.userData.lit=lit;
+  obj.userData.flame.material=lit?mats.fireLit:mats.fireOff;
+  obj.userData.ptLight.intensity=lit?2.2:0;
+}
+
+function setTorchCount(L,R){
+  for(let i=0;i<5;i++){setTorchLit('L',i,i<L); setTorchLit('R',i,i<R);}
+  setDots(L,R);
+}
+
+// ==== SOLDIERS ====
+function mkSoldier(x,z,fy){
+  const g=new THREE.Group();
+  [-0.2,0.2].forEach(dx=>{g.add(mk(new THREE.CylinderGeometry(.1,.1,.85,6),mats.tunic,dx,.42,0));});
+  g.add(mk(new THREE.BoxGeometry(.72,1.05,.55),mats.tunic,0,1.3,0));
+  g.add(mk(new THREE.CylinderGeometry(.06,.06,.65,5),mats.skin,-.36,1.5,0,0,0,.35));
+  const shld=mk(new THREE.CylinderGeometry(.55,.55,.07,16),mats.shield); shld.rotation.y=Math.PI/2; shld.position.set(.6,1.2,.15); g.add(shld);
+  const shldBoss=mk(new THREE.SphereGeometry(.14,8,8),mats.armor); shldBoss.position.set(.67,1.2,.15); g.add(shldBoss);
+  g.add(mk(new THREE.SphereGeometry(.27,9,9),mats.skin,0,2.1,0));
+  g.add(mk(new THREE.SphereGeometry(.3,9,9),mats.armor,0,2.24,0));
+  const c=mk(new THREE.BoxGeometry(.09,.4,.65),mats.crest); c.position.set(0,2.66,0); g.add(c);
+  g.add(mk(new THREE.CylinderGeometry(.03,.03,2.8,5),mats.wood,-.55,1.6,.1));
+  g.add(mk(new THREE.ConeGeometry(.08,.32,5),mats.armor,-.55,3.1,.1));
+  g.position.set(x,.02,z); g.rotation.y=fy;
+  return g;
+}
+// Place soldiers at both walls
+[[-11,2,0],[-8.5,2,.2],[-6,2,-.1]].forEach(([x,z,fy])=>scene.add(mkSoldier(x,z,fy)));
+[[6,2,Math.PI],[8.5,2,Math.PI+.18],[11,2,Math.PI-.12]].forEach(([x,z,fy])=>scene.add(mkSoldier(x,z,fy)));
+// Commander in center
+const cmd=mkSoldier(0,3,Math.PI); cmd.scale.setScalar(1.08); scene.add(cmd);
+
+// ===================== GAME STATE =====================
+let score=0, roundIdx=0, lives=3;
+let curLetterIdx=0, waitInput=false, attempts=0;
+const MAX_ATT=3;
+let curWord='', curLetterCode=null;
+let phase='idle';
+
+function ui(id,v){const el=document.getElementById(id); if(el)el.textContent=v;}
+function show(id,d='block'){document.getElementById(id).style.display=d;}
+function hide(id){document.getElementById(id).style.display='none';}
+
+function updateHUD(){
+  ui('sc',score);
+  ui('rnd',(roundIdx+1)+'/'+WORDS.length);
+  ui('lpos',(curLetterIdx+1)+'/'+curWord.length);
+  const lv=lives;
+  ui('lv','♥'.repeat(lv)+'♡'.repeat(Math.max(0,3-lv)));
+}
+
+function setStatus(msg){
+  const el=document.getElementById('status');
+  el.textContent=msg; el.style.display=msg?'block':'none';
+}
+
+function buildWordBar(word){
+  const wb=document.getElementById('word-bar'); wb.innerHTML='';
+  wb.style.display='flex';
+  for(let i=0;i<word.length;i++){
+    const b=document.createElement('div'); b.className='lbox'; b.id='lb'+i; b.textContent='_'; wb.appendChild(b);
+  }
+}
+
+function markCur(i){
+  document.querySelectorAll('.lbox').forEach(b=>b.classList.remove('cur'));
+  const b=document.getElementById('lb'+i); if(b) b.classList.add('cur');
+}
+
+function revealBox(i,letter,ok){
+  const b=document.getElementById('lb'+i); if(!b)return;
+  b.textContent=letter; b.classList.remove('cur');
+  b.classList.add(ok?'ok':'bad');
+}
+
+function onCell(r,c){
+  if(!waitInput) return;
+  const clicked=GRID[r][c];
+  const expected=curWord[curLetterIdx];
+  const code=curLetterCode;
+  waitInput=false;
+
+  if(clicked===expected){
+    flashCell(r,c,true);
+    score+=100;
+    revealBox(curLetterIdx,expected,true);
+    setStatus('✓ Σωστό! «'+expected+'» — Γραμμή '+code.row+', Στήλη '+code.col);
+    setTimeout(()=>afterLetter(),1300);
+  } else {
+    attempts++;
+    flashCell(r,c,false);
+    if(attempts>=MAX_ATT){
+      lives=Math.max(0,lives-1);
+      revealBox(curLetterIdx,expected,false);
+      flashCell(code.row-1,code.col-1,true);
+      setStatus('✗ Το γράμμα ήταν «'+expected+'» — Γρ.'+code.row+' × Στ.'+code.col+'\n(-1 ζωή)');
+      updateHUD();
+      setTimeout(()=>afterLetter(),2000);
+    } else {
+      setStatus('✗ Λάθος! Κοίτα πόσοι πυρσοί ανάβουν!\n(Απόπειρα '+(attempts)+'/'+MAX_ATT+')');
+      setTimeout(()=>{ waitInput=true; },500);
+    }
+  }
+  updateHUD();
+}
+
+function afterLetter(){
+  gridHL(0,0,'none'); setTorchCount(0,0);
+  curLetterIdx++;
+  if(curLetterIdx>=curWord.length) endWord();
+  else setTimeout(()=>sendLetter(),700);
+}
+
+// Protocol: 2+2 start → 0+0 → row+col
+function sendLetter(){
+  const lt=curWord[curLetterIdx];
+  curLetterCode=getCode(lt);
+  attempts=0;
+  markCur(curLetterIdx);
+  updateHUD();
+
+  // FASE 1: start signal 2+2
+  phase='start';
+  setTorchCount(2,2); setDots(2,2);
+  setStatus('📡 Έναρξη σήματος: ο πομπός ανάβει 2 πυρσούς...');
+  gridHL(0,0,'none');
+
+  setTimeout(()=>{
+    // FASE 2: lower all
+    setTorchCount(0,0);
+    setStatus('⏳ Επιβεβαίωση δέκτη: κατεβάζουν πυρσούς...');
+
+    setTimeout(()=>{
+      // FASE 3: send letter
+      const {row,col}=curLetterCode;
+      setTorchCount(row,col);
+      gridHL(row,col,'show');
+      setStatus('🔥 Τι γράμμα σχηματίζεται;\nΑριστ.='+row+' πυρσοί (Γραμμή '+row+') | Δεξί='+col+' πυρσοί (Στήλη '+col+')\nΚάνε κλικ στο σωστό γράμμα!');
+      waitInput=true;
+      phase='input';
+    },900);
+  },1400);
+}
+
+function endWord(){
+  const allOk=[...document.querySelectorAll('.lbox')].every(b=>b.classList.contains('ok'));
+  if(allOk) score+=300;
+  setStatus(allOk?'🏆 Εξαιρετικό! Αποκωδικοποίησες «'+curWord+'»!\n+300 πόντοι!':'⚔ Η λέξη ήταν «'+curWord+'».');
+  updateHUD();
+  setTimeout(()=>{
+    roundIdx++;
+    if(roundIdx<WORDS.length&&lives>0) startWord();
+    else endGame();
+  },2800);
+}
+
+function startWord(){
+  const wd=WORDS[roundIdx];
+  curWord=wd.w; curLetterIdx=0; attempts=0; waitInput=false;
+  gridHL(0,0,'none'); setTorchCount(0,0);
+  updateHUD();
+  ui('wtitle',wd.hint);
+  buildWordBar(curWord);
+  markCur(0);
+  setStatus('📜 Νέα λέξη! «'+wd.hint+'»\nΠαρακολούθησε τους πυρσούς...');
+  setTimeout(()=>sendLetter(),1600);
+}
+
+function startGame(){
+  hide('ov');
+  show('word-bar','flex'); show('status'); show('tpanel','flex');
+  show('pnk'); show('leg'); show('lives');
+  score=0; roundIdx=0; lives=3;
+  updateHUD();
+  startWord();
+}
+
+function endGame(){
+  const ov=document.getElementById('ov');
+  const stars=score>=1500?'★★★':score>=900?'★★☆':'★☆☆';
+  ov.innerHTML=`
+    <div style="font-size:32px;margin-bottom:8px">🔥 ${stars} 🔥</div>
+    <h1 style="font-size:38px">ΤΕΛΟΣ ΣΗΜΑΤΟΔΟΣΙΑΣ</h1>
+    <div class="sub">Αποτέλεσμα Αγγελιαφόρου</div>
+    <p class="info" style="font-size:26px;color:#ffd700;margin:14px 0">Σκορ: <strong>${score}</strong></p>
+    <p class="info">Ζωές: <span class="gold">${'♥'.repeat(lives)}</span></p>
+    <p class="info">Λέξεις: <span class="gold">${roundIdx}/${WORDS.length}</span> αποκωδικοποιήθηκαν</p>
+    <p class="info" style="margin-top:12px;opacity:.55;font-size:11px">«Οι φρυκτωρίες ένωναν τις πόλεις της Ελλάδας<br>μέσω του φωτός και της σοφίας»</p>
+    <button class="gbtn" onclick="location.reload()">⚔ &nbsp;ΠΑΙΞΕ ΞΑΝΑ&nbsp; ⚔</button>`;
+  show('ov','flex');
+}
+
+document.getElementById('sb').onclick=startGame;
+
+// ===================== ANIMATION =====================
+const clock=new THREE.Clock(); let t=0;
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),.05); t+=dt;
+
+  // Torch flicker
+  TORCH_OBJS.L.concat(TORCH_OBJS.R).forEach((obj,i)=>{
+    if(obj.userData.lit){
+      obj.userData.ptLight.intensity=2.0+Math.sin(t*9+i*1.7)*.55;
+      obj.userData.flame.scale.setScalar(.88+Math.sin(t*8+i*.9)*.18);
+    }
+  });
+
+  // Gentle camera bob
+  camera.position.x=Math.sin(t*.12)*.4;
+  camera.position.y=7+Math.sin(t*.18)*.18;
+  camera.lookAt(Math.sin(t*.1)*.25,3,0);
+
+  // Moon glow pulse
+  moonPt.intensity=1.6+Math.sin(t*.3)*.3;
+
+  renderer.render(scene,camera);
+}
+animate();
+
+window.addEventListener('resize',()=>{
+  const nw=window.innerWidth,nh=window.innerHeight;
+  camera.aspect=nw/nh; camera.updateProjectionMatrix(); renderer.setSize(nw,nh);
+});
+</script>
+</body>
+</html>
